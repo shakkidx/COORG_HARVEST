@@ -69,7 +69,7 @@ function injectHeaderAndCart() {
     <div class="container">
       <nav class="nav-container">
         <a href="index.html" class="logo" style="display: flex; align-items: center;">
-          <img src="logo.png" alt="Coorg Harvest" style="height: 55px; width: auto; object-fit: contain;">
+          <img src="logo.png" alt="Coorg Harvest" class="header-logo-img">
           <h1 style="display: none;">Coorg Harvest</h1>
         </a>
         <ul class="nav-menu" id="nav-menu">
@@ -182,7 +182,7 @@ function injectFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col footer-about">
-          <img src="logo.png" alt="Coorg Harvest Logo" style="height: 70px; width: auto; object-fit: contain; margin-bottom: 20px; background: white; padding: 5px; border-radius: var(--border-radius-sm);">
+          <img src="logo.png" alt="Coorg Harvest Logo" style="height: 95px; width: auto; object-fit: contain; margin-bottom: 20px; background: white; padding: 5px; border-radius: var(--border-radius-sm);">
           <p>Bringing you pure spices, handpicked teas, and raw honey straight from our plantations in the hills of Kodagu. 100% natural, sustainable, and direct.</p>
           <div class="social-links">
             <a href="#" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>

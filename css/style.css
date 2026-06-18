@@ -249,9 +249,15 @@ header.scrolled .nav-container {
 }
 
 .logo img {
-  width: 40px;
-  height: 40px;
+  width: auto;
+  height: 70px;
+  max-height: 70px;
   object-fit: contain;
+  transition: var(--transition-smooth);
+}
+
+header.scrolled .logo img {
+  height: 55px;
 }
 
 .logo h1 {
@@ -3196,8 +3202,8 @@ footer {
 /* 3. Back to Top Button */
 .back-to-top {
   position: fixed;
-  bottom: 85px;
-  right: 20px;
+  bottom: 105px; /* stacks above whatsapp-float on desktop */
+  right: 30px;
   width: 45px;
   height: 45px;
   background-color: var(--primary-green);
@@ -3243,6 +3249,35 @@ footer {
     display: flex;
   }
 
+  .logo img {
+    height: 60px !important;
+  }
+
+  .whatsapp-float {
+    bottom: 80px !important;
+    right: 20px !important;
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 26px !important;
+    z-index: 996 !important;
+  }
+
+  .back-to-top {
+    bottom: 145px !important;
+    right: 20px !important;
+    width: 50px !important;
+    height: 50px !important;
+    z-index: 995 !important;
+  }
+
+  body.product-details-page .whatsapp-float {
+    bottom: 145px !important;
+  }
+
+  body.product-details-page .back-to-top {
+    bottom: 210px !important;
+  }
+
   /* Increase tap size on key inputs, links, buttons to min 44x44px */
   button, 
   .btn,
@@ -3270,7 +3305,7 @@ footer {
   /* Adjust hero banner padding for thumbs/fingers navigation */
   .hero-section {
     height: auto;
-    padding: 120px 0 60px 0;
+    padding: 85px 0 30px 0;
     text-align: center;
   }
   
@@ -3308,18 +3343,23 @@ footer {
 
   .hero-right {
     max-width: 100%;
-    height: 280px;
+    height: 220px;
     order: 1;
     width: 100%;
+    margin-bottom: 15px;
   }
 
   .hero-slide h1 {
-    font-size: 2.3rem;
+    font-size: 2.0rem;
   }
 
   .hero-desc {
-    font-size: 1.05rem;
-    margin-bottom: 25px;
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+  }
+  
+  .hero-label {
+    margin-bottom: 8px;
   }
   
   .hero-btns {
