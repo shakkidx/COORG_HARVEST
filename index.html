@@ -67,18 +67,78 @@
 
   <!-- Hero Section -->
   <section class="hero-section">
-    <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1554973653-c9071bd1401a?auto=format&fit=crop&w=1920&q=80');"></div>
-    <div class="hero-overlay"></div>
-    <div class="container">
-      <div class="hero-content">
-        <p class="hero-tagline">Harvested in Coorg, Delivered with Care</p>
-        <h1>From the Heart of Coorg to Your Home</h1>
-        <p>Authentic spices, herbal teas, shade-grown coffees & natural wellness products sourced directly from the misty hills and plantations of Kodagu, Karnataka.</p>
-        <div class="hero-btns">
-          <a href="shop.html" class="btn btn-primary">Shop Now <i class="fa-solid fa-cart-shopping"></i></a>
-          <a href="#categories" class="btn btn-outline-white">Explore Collections <i class="fa-solid fa-leaf"></i></a>
+    <div class="hero-slider">
+      <!-- Slide 1: Spices and Nature -->
+      <div class="hero-slide active">
+        <div class="container hero-container">
+          <div class="hero-left">
+            <p class="hero-label">Authentic from Coorg</p>
+            <h1>From the Heart of Coorg to Your Home</h1>
+            <p class="hero-desc">Premium organic spices, shade-grown Arabica coffees, and wellness products sourced directly from local farmers in the misty hills of Kodagu, Karnataka.</p>
+            <div class="hero-btns">
+              <a href="shop.html" class="btn btn-primary">Shop Now <i class="fa-solid fa-cart-shopping"></i></a>
+              <a href="#categories" class="btn btn-outline-white">Explore Collections <i class="fa-solid fa-leaf"></i></a>
+            </div>
+          </div>
+          <div class="hero-right">
+            <div class="hero-image-wrapper">
+              <img src="images/hero_slide_1.png" alt="Misty Coorg Mountains & Spices" class="hero-slide-img" loading="eager">
+              <div class="hero-image-overlay"></div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- Slide 2: Spices and Harvesting -->
+      <div class="hero-slide">
+        <div class="container hero-container">
+          <div class="hero-left">
+            <p class="hero-label">Authentic from Coorg</p>
+            <h1>Pure Spices. Wild by Nature.</h1>
+            <p class="hero-desc">Handpicked bold black pepper, aromatic cardamom, and wild forest cinnamon harvested using sustainable shade cultivation methods in Kodagu.</p>
+            <div class="hero-btns">
+              <a href="shop.html?category=Premium%20Spices" class="btn btn-primary">Shop Spices <i class="fa-solid fa-cart-shopping"></i></a>
+              <a href="#categories" class="btn btn-outline-white">Explore Collections <i class="fa-solid fa-leaf"></i></a>
+            </div>
+          </div>
+          <div class="hero-right">
+            <div class="hero-image-wrapper">
+              <img src="images/hero_slide_2.png" alt="Pure Wild Spices & Pepper Vines" class="hero-slide-img" loading="lazy">
+              <div class="hero-image-overlay"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: Herbal Teas & Wellness -->
+      <div class="hero-slide">
+        <div class="container hero-container">
+          <div class="hero-left">
+            <p class="hero-label">Authentic from Coorg</p>
+            <h1>Sip the Goodness of Nature</h1>
+            <p class="hero-desc">Enjoy therapeutic wellness with our organic hibiscus teas, handpicked loose green tea leaves, and wild forest honey infusions.</p>
+            <div class="hero-btns">
+              <a href="shop.html?category=Herbal%20Teas" class="btn btn-primary">Shop Teas <i class="fa-solid fa-cart-shopping"></i></a>
+              <a href="#categories" class="btn btn-outline-white">Explore Collections <i class="fa-solid fa-leaf"></i></a>
+            </div>
+          </div>
+          <div class="hero-right">
+            <div class="hero-image-wrapper">
+              <img src="images/hero_slide_3.png" alt="Organic Herbal Teas & Natural Wellness" class="hero-slide-img" loading="lazy">
+              <div class="hero-image-overlay"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slider Controls -->
+    <button class="slider-control prev-slide" aria-label="Previous Slide"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="slider-control next-slide" aria-label="Next Slide"><i class="fa-solid fa-chevron-right"></i></button>
+    <div class="slider-dots">
+      <span class="dot active" data-index="0"></span>
+      <span class="dot" data-index="1"></span>
+      <span class="dot" data-index="2"></span>
     </div>
   </section>
 

@@ -15,6 +15,9 @@ document.addEventListener("DOMContentLoaded", function() {
   injectMobileBottomNav();
   injectBackToTop();
 
+  // 6. INITIALIZE SPLIT SCREEN HERO SLIDER
+  initializeHeroSlider();
+
   // 2. STICKY HEADER ON SCROLL
   const header = document.getElementById("site-header");
   if (header) {
@@ -565,4 +568,109 @@ function renderCartItems() {
 
   const total = subtotal - discount + shipping;
   totalEl.textContent = `₹${total.toFixed(2)}`;
+}
+
+// Controls, autoplay, and swipe transitions for the split hero slider
+function initializeHeroSlider() {
+  const slides = document.querySelectorAll(".hero-slide");
+  const dots = document.querySelectorAll(".slider-dots .dot");
+  const prevBtn = document.querySelector(".prev-slide");
+  const nextBtn = document.querySelector(".next-slide");
+  
+  if (slides.length === 0) return;
+
+  let currentSlide = 0;
+  let autoplayTimer = null;
+  const autoplayInterval = 6000; // 6 seconds
+
+  function showSlide(index) {
+    // Remove active classes
+    slides.forEach(slide => slide.classList.remove("active"));
+    dots.forEach(dot => dot.classList.remove("active"));
+
+    // Wrap-around index
+    if (index >= slides.length) {
+      currentSlide = 0;
+    } else if (index < 0) {
+      currentSlide = slides.length - 1;
+    } else {
+      currentSlide = index;
+    }
+
+    // Add active classes
+    slides[currentSlide].classList.add("active");
+    if (dots[currentSlide]) {
+      dots[currentSlide].classList.add("active");
+    }
+  }
+
+  function nextSlide() {
+    showSlide(currentSlide + 1);
+    resetAutoplay();
+  }
+
+  function prevSlide() {
+    showSlide(currentSlide - 1);
+    resetAutoplay();
+  }
+
+  function startAutoplay() {
+    autoplayTimer = setInterval(nextSlide, autoplayInterval);
+  }
+
+  function resetAutoplay() {
+    clearInterval(autoplayTimer);
+    startAutoplay();
+  }
+
+  // Bind chevron arrows
+  if (prevBtn) {
+    prevBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      prevSlide();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      nextSlide();
+    });
+  }
+
+  // Bind dots
+  dots.forEach((dot, idx) => {
+    dot.addEventListener("click", function(e) {
+      e.preventDefault();
+      showSlide(idx);
+      resetAutoplay();
+    });
+  });
+
+  // Touch swipe gesture support for mobile viewport
+  let touchStartX = 0;
+  let touchEndX = 0;
+  const sliderContainer = document.querySelector(".hero-slider");
+
+  if (sliderContainer) {
+    sliderContainer.addEventListener("touchstart", function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    sliderContainer.addEventListener("touchend", function(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+  }
+
+  function handleSwipe() {
+    const swipeThreshold = 50;
+    if (touchStartX - touchEndX > swipeThreshold) {
+      nextSlide(); // Swiped left
+    } else if (touchEndX - touchStartX > swipeThreshold) {
+      prevSlide(); // Swiped right
+    }
+  }
+
+  // Initialize slider auto-rotation loop
+  startAutoplay();
 }
