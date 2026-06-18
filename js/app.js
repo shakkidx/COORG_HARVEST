@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", function() {
   injectHeaderAndCart();
   injectFooter();
   injectWhatsAppWidget();
+  injectMobileBottomNav();
+  injectBackToTop();
 
   // 2. STICKY HEADER ON SCROLL
   const header = document.getElementById("site-header");
@@ -255,6 +257,104 @@ function injectWhatsAppWidget() {
   wa.title = "Chat on WhatsApp";
   wa.innerHTML = `<i class="fa-brands fa-whatsapp"></i>`;
   document.body.appendChild(wa);
+}
+
+// Injects the mobile sticky bottom navigation bar
+function injectMobileBottomNav() {
+  const currentPath = window.location.pathname;
+  const isHome = currentPath.endsWith("index.html") || currentPath.endsWith("/") || currentPath === "";
+  
+  const bottomNav = document.createElement("div");
+  bottomNav.className = "mobile-bottom-nav";
+  bottomNav.innerHTML = `
+    <a href="index.html" class="mobile-nav-item ${isHome ? 'active' : ''}">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </a>
+    <a href="index.html#categories" id="mobile-nav-categories" class="mobile-nav-item">
+      <i class="fa-solid fa-list"></i>
+      <span>Categories</span>
+    </a>
+    <a href="#" id="mobile-nav-search" class="mobile-nav-item">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span>Search</span>
+    </a>
+    <a href="#" id="mobile-nav-cart" class="mobile-nav-item">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <span class="badge cart-count-badge" style="display: none;">0</span>
+      <span>Cart</span>
+    </a>
+    <a href="admin-login.html" class="mobile-nav-item ${currentPath.includes('admin-login.html') ? 'active' : ''}">
+      <i class="fa-solid fa-user"></i>
+      <span>Account</span>
+    </a>
+  `;
+  document.body.appendChild(bottomNav);
+
+  // Setup event listeners
+  setupMobileBottomNav();
+}
+
+// Setup event listeners for mobile bottom navigation triggers
+function setupMobileBottomNav() {
+  const categoriesBtn = document.getElementById("mobile-nav-categories");
+  if (categoriesBtn) {
+    categoriesBtn.addEventListener("click", function(e) {
+      const currentPath = window.location.pathname;
+      const isHome = currentPath.endsWith("index.html") || currentPath.endsWith("/") || currentPath === "";
+      if (isHome) {
+        e.preventDefault();
+        const categoriesSection = document.getElementById("categories");
+        if (categoriesSection) {
+          categoriesSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  }
+
+  const searchBtn = document.getElementById("mobile-nav-search");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      const searchTrigger = document.getElementById("search-trigger");
+      if (searchTrigger) {
+        searchTrigger.click();
+      }
+    });
+  }
+
+  const cartBtn = document.getElementById("mobile-nav-cart");
+  if (cartBtn) {
+    cartBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      if (window.openCartDrawer) {
+        window.openCartDrawer();
+      }
+    });
+  }
+}
+
+// Injects back to top button and handles its scroll/click actions
+function injectBackToTop() {
+  const btn = document.createElement("a");
+  btn.href = "#";
+  btn.className = "back-to-top";
+  btn.id = "back-to-top";
+  btn.innerHTML = `<i class="fa-solid fa-arrow-up"></i>`;
+  document.body.appendChild(btn);
+
+  btn.addEventListener("click", function(e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", function() {
+    if (window.scrollY > 400) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
 }
 
 // Search Overlay Logic

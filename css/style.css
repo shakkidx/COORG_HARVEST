@@ -2961,3 +2961,370 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* MOBILE FIRST RESPONSIVE UTILITIES & ADDITIONS */
+/* 1. Mobile Sticky Bottom Navigation Bar */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: var(--white);
+  border-top: 1px solid var(--light-gray);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 999;
+  display: none; /* Hidden on desktop */
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--medium-gray);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  flex-grow: 1;
+  height: 100%;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.mobile-nav-item i {
+  font-size: 1.25rem;
+  margin-bottom: 3px;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+  color: var(--primary-green);
+}
+
+.mobile-nav-item .badge {
+  position: absolute;
+  top: 5px;
+  right: 25%;
+  background-color: var(--accent-gold);
+  color: var(--white);
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 2. Product Detail Page Sticky Purchase Bar */
+.product-sticky-buy-bar {
+  position: fixed;
+  bottom: 60px; /* Sits directly above mobile bottom nav */
+  left: 0;
+  width: 100%;
+  height: 65px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--light-gray);
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.04);
+  z-index: 998;
+  display: none; /* Hidden on desktop */
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  animation: slideUpBar 0.3s ease;
+}
+
+@keyframes slideUpBar {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sticky-bar-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sticky-bar-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticky-bar-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* 3. Back to Top Button */
+.back-to-top {
+  position: fixed;
+  bottom: 85px;
+  right: 20px;
+  width: 45px;
+  height: 45px;
+  background-color: var(--primary-green);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition-smooth);
+  z-index: 997;
+  font-size: 1.1rem;
+}
+
+.back-to-top.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-5px);
+}
+
+.back-to-top:hover {
+  background-color: var(--tea-leaf);
+  transform: translateY(-8px);
+}
+
+/* 4. Touch Targets Optimization & Scaling on Mobile */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  
+  body {
+    padding-bottom: 60px; /* Offset for bottom nav */
+  }
+
+  body.product-details-page {
+    padding-bottom: 125px; /* Offset for bottom nav + details bar */
+  }
+  
+  .product-sticky-buy-bar {
+    display: flex;
+  }
+
+  /* Increase tap size on key inputs, links, buttons to min 44x44px */
+  button, 
+  .btn,
+  .quantity-control button,
+  .cart-item-remove,
+  .wishlist-btn,
+  .nav-icon {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quantity-control button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .quantity-control span {
+    font-size: 1rem;
+    width: 38px;
+  }
+
+  /* Adjust hero banner padding for thumbs/fingers navigation */
+  .hero-section {
+    height: auto;
+    padding: 120px 0 60px 0;
+    text-align: center;
+  }
+  
+  .hero-btns {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+
+  .hero-btns .btn {
+    width: 100%;
+  }
+  
+  /* Stacking columns */
+  .story-wrapper,
+  .checkout-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  /* Compact spacing to reduce whitespace */
+  .section {
+    padding: 40px 0;
+  }
+
+  .section-header {
+    margin-bottom: 30px;
+  }
+
+  .section-header h2 {
+    font-size: 1.8rem;
+  }
+}
+
+/* 5. Mobile Two-Column Grid Scaling */
+@media (max-width: 576px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+
+  .product-card-img-wrapper {
+    height: 150px;
+  }
+
+  .product-card-body {
+    padding: 12px;
+  }
+
+  .product-card-category {
+    font-size: 0.65rem;
+    margin-bottom: 4px;
+  }
+
+  .product-card-title {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.6em; /* clamp to max 2 lines for card alignment */
+  }
+
+  .product-rating {
+    font-size: 0.7rem;
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+
+  .product-card-price-row {
+    padding-top: 10px;
+  }
+
+  .price {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .price-old {
+    font-size: 0.75rem;
+    margin-left: 2px;
+  }
+
+  .product-card .btn-add-cart {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    font-size: 0.75rem;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr !important;
+    gap: 15px;
+  }
+
+  .category-card {
+    height: 200px;
+  }
+
+  .category-overlay {
+    padding: 20px;
+  }
+
+  /* Full screen cart drawer on mobile */
+  .cart-drawer {
+    width: 100% !important;
+    right: -100% !important;
+  }
+
+  .cart-drawer.active {
+    right: 0 !important;
+  }
+
+  .cart-item {
+    grid-template-columns: 60px 1fr auto;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cart-item-img {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Base style for accordion header (hidden on desktop) */
+.accordion-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .tabs-nav {
+    display: none !important;
+  }
+  
+  .accordion-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    background-color: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: var(--border-radius-sm);
+    color: var(--dark-text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-align: left;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+  }
+
+  .accordion-header i {
+    transition: transform 0.3s ease;
+  }
+
+  .accordion-header.active {
+    background-color: var(--primary-green) !important;
+    color: var(--white) !important;
+  }
+
+  .accordion-header.active i {
+    transform: rotate(180deg);
+  }
+
+  .tab-pane {
+    display: none;
+    padding: 20px;
+    background-color: var(--white);
+    border: 1px solid var(--light-gray) !important;
+    border-top: none !important;
+    margin-bottom: 15px;
+    border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+  }
+
+  .tab-pane.active {
+    display: block !important;
+  }
+}
+

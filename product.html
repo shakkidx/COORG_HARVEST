@@ -8,7 +8,7 @@
   <meta name="description" content="Detailed information on Coorg Harvest pure spices, handpicked teas, coffees, and organic wellness products. Sourced directly from local farmers in Kodagu.">
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="product-details-page">
 
   <!-- Injected Header -->
   <header id="site-header"></header>
@@ -165,12 +165,14 @@
             <button class="tab-btn" data-tab="tab-usage">Usage Instructions</button>
           </div>
 
+          <button class="accordion-header active" data-tab="tab-desc">Description <i class="fa-solid fa-chevron-down"></i></button>
           <div class="tab-pane active" id="tab-desc">
             <h3>Product Overview</h3>
             <p>${p.description}</p>
             <p style="margin-top: 15px;">Harvested and packed in Gonikopal, Coorg. We guarantee that this product contains no artificial preservatives, additives, or synthetic flavorings, ensuring pure organic botanical taste straight from the Western Ghats.</p>
           </div>
           
+          <button class="accordion-header" data-tab="tab-ing">Ingredients <i class="fa-solid fa-chevron-down"></i></button>
           <div class="tab-pane" id="tab-ing">
             <h3>Ingredients List</h3>
             <ul>
@@ -178,6 +180,7 @@
             </ul>
           </div>
 
+          <button class="accordion-header" data-tab="tab-benefits">Health Benefits <i class="fa-solid fa-chevron-down"></i></button>
           <div class="tab-pane" id="tab-benefits">
             <h3>Therapeutic & Health Benefits</h3>
             <ul>
@@ -185,6 +188,7 @@
             </ul>
           </div>
 
+          <button class="accordion-header" data-tab="tab-usage">Usage Instructions <i class="fa-solid fa-chevron-down"></i></button>
           <div class="tab-pane" id="tab-usage">
             <h3>Recommended Application & Preparation</h3>
             <p>${p.usage}</p>
@@ -245,6 +249,17 @@
           <h2 style="font-size: 2rem; margin-bottom: 30px; text-align: center;">Related Products</h2>
           <div class="product-grid" id="related-products-grid"></div>
         </div>
+
+        <!-- Mobile Sticky Purchase Bar -->
+        <div class="product-sticky-buy-bar">
+          <div class="sticky-bar-info">
+            <span class="sticky-bar-title">${p.name}</span>
+            <span class="sticky-bar-price">₹${p.price}</span>
+          </div>
+          <button class="btn btn-primary" onclick="addCurrentToCart()" style="padding: 10px 20px; font-size: 0.85rem; min-height: 44px;">
+            Add to Cart <i class="fa-solid fa-basket-shopping" style="margin-left: 5px;"></i>
+          </button>
+        </div>
       `;
     }
 
@@ -283,17 +298,44 @@
     // Tabs control binding
     function setupTabControls() {
       const tabs = document.querySelectorAll(".tab-btn");
+      const accordions = document.querySelectorAll(".accordion-header");
       const panes = document.querySelectorAll(".tab-pane");
 
+      // Desktop Tab click
       tabs.forEach(tab => {
         tab.addEventListener("click", function() {
           const target = this.getAttribute("data-tab");
           
           tabs.forEach(t => t.classList.remove("active"));
+          accordions.forEach(a => a.classList.remove("active"));
           panes.forEach(p => p.classList.remove("active"));
 
           this.classList.add("active");
+          const matchingAccordion = document.querySelector(`.accordion-header[data-tab="${target}"]`);
+          if (matchingAccordion) matchingAccordion.classList.add("active");
           document.getElementById(target).classList.add("active");
+        });
+      });
+
+      // Mobile Accordion header click
+      accordions.forEach(acc => {
+        acc.addEventListener("click", function() {
+          const target = this.getAttribute("data-tab");
+          const isAlreadyActive = this.classList.contains("active");
+
+          if (isAlreadyActive) {
+            this.classList.remove("active");
+            document.getElementById(target).classList.remove("active");
+          } else {
+            tabs.forEach(t => t.classList.remove("active"));
+            accordions.forEach(a => a.classList.remove("active"));
+            panes.forEach(p => p.classList.remove("active"));
+
+            this.classList.add("active");
+            const matchingTab = document.querySelector(`.tab-btn[data-tab="${target}"]`);
+            if (matchingTab) matchingTab.classList.add("active");
+            document.getElementById(target).classList.add("active");
+          }
         });
       });
     }
