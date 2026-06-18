@@ -42,12 +42,17 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  width: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--dark-text);
   background-color: var(--cream-light);
   line-height: 1.6;
-  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -254,6 +259,10 @@ header.scrolled .nav-container {
   max-height: 70px;
   object-fit: contain;
   transition: var(--transition-smooth);
+  border-radius: var(--border-radius-sm);
+  background: var(--white);
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
 }
 
 header.scrolled .logo img {
@@ -3305,7 +3314,7 @@ footer {
   /* Adjust hero banner padding for thumbs/fingers navigation */
   .hero-section {
     height: auto;
-    padding: 85px 0 30px 0;
+    padding: 105px 0 40px 0; /* Slightly increased top padding for a clean fit */
     text-align: center;
   }
   
@@ -3385,6 +3394,26 @@ footer {
   .checkout-layout {
     grid-template-columns: 1fr;
     gap: 30px;
+  }
+
+  .story-img-badge {
+    right: 10px !important;
+    bottom: -15px !important;
+    max-width: 180px !important;
+    padding: 15px !important;
+  }
+
+  .story-img-badge h4 {
+    font-size: 1.4rem !important;
+  }
+
+  .story-img-badge p {
+    font-size: 0.75rem !important;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
   }
 
   /* Compact spacing to reduce whitespace */
