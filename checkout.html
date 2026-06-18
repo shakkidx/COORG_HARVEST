@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | Coorg Harvest Secure Payment</title>
+  
+  <meta name="description" content="Securely complete your Coorg Harvest purchase using UPI, credit cards, net banking, or cash on delivery.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header id="site-header"></header>
+
+  <!-- Page Header Breadcrumbs -->
+  <section class="page-header-block" style="padding: 120px 0 40px 0;">
+    <div class="container">
+      <h1>Secure Checkout</h1>
+      <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <a href="shop.html">Shop Catalog</a>
+        <span>/</span>
+        <span>Checkout</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Checkout Section -->
+  <section class="section" style="background-color: var(--cream-light); padding-top: 50px;">
+    <div class="container">
+      
+      <div id="checkout-main-area">
+        <div class="checkout-layout">
+          
+          <!-- Left Forms Column -->
+          <div>
+            <form id="checkout-form" onsubmit="handleCheckoutSubmit(event)">
+              
+              <!-- Card: Shipping Info -->
+              <div class="checkout-card">
+                <h3>1. Shipping & Delivery Details</h3>
+                
+                <div class="form-group">
+                  <label for="bill-name">Full Name</label>
+                  <input type="text" id="bill-name" class="form-control" placeholder="E.g., Devika Chengappa" required>
+                </div>
+                
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="bill-phone">Phone / WhatsApp Number</label>
+                    <input type="tel" id="bill-phone" class="form-control" placeholder="E.g., +91 9880077218" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="bill-email">Email Address</label>
+                    <input type="email" id="bill-email" class="form-control" placeholder="E.g., devika@example.com" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="bill-address">Shipping Address</label>
+                  <textarea id="bill-address" class="form-control" rows="3" placeholder="Apartment, suite, street address" required></textarea>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="bill-city">City</label>
+                    <input type="text" id="bill-city" class="form-control" placeholder="E.g., Gonikopal" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="bill-state">State</label>
+                    <input type="text" id="bill-state" class="form-control" placeholder="E.g., Karnataka" required>
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="bill-pin">PIN Code (Postal Code)</label>
+                    <input type="text" id="bill-pin" class="form-control" pattern="[0-9]{6}" placeholder="E.g., 571213" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="bill-country">Country</label>
+                    <input type="text" id="bill-country" class="form-control" value="India" readonly>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card: Payment Methods -->
+              <div class="checkout-card">
+                <h3>2. Secure Payment Options</h3>
+                <div class="payment-method-options">
+                  
+                  <!-- Option 1: India UPI (Google Pay, PhonePe, Paytm, etc) -->
+                  <div class="payment-method-item active" onclick="selectPaymentMethod(this, 'upi')">
+                    <input type="radio" name="payment_method" id="pay-upi" value="upi" checked>
+                    <div style="flex-grow: 1;">
+                      <span>India UPI (GPay / PhonePe / Paytm / BHIM)</span>
+                      <p style="font-size:0.75rem; color:var(--medium-gray); margin-top:2px;">Scan QR code or pay via redirect immediately.</p>
+                    </div>
+                    <!-- Brand logos simulated -->
+                    <i class="fa-solid fa-qrcode" style="font-size: 1.5rem; color: var(--primary-green);"></i>
+                  </div>
+
+                  <!-- Option 2: Razorpay Credit/Debit Cards -->
+                  <div class="payment-method-item" onclick="selectPaymentMethod(this, 'card')">
+                    <input type="radio" name="payment_method" id="pay-card" value="card">
+                    <div style="flex-grow: 1;">
+                      <span>Credit & Debit Cards (Razorpay)</span>
+                      <p style="font-size:0.75rem; color:var(--medium-gray); margin-top:2px;">Visa, Mastercard, RuPay, Maestro supported.</p>
+                    </div>
+                    <i class="fa-solid fa-credit-card" style="font-size: 1.5rem; color: var(--primary-green);"></i>
+                  </div>
+
+                  <!-- Option 3: Net Banking -->
+                  <div class="payment-method-item" onclick="selectPaymentMethod(this, 'netbank')">
+                    <input type="radio" name="payment_method" id="pay-netbank" value="netbank">
+                    <div style="flex-grow: 1;">
+                      <span>Net Banking</span>
+                      <p style="font-size:0.75rem; color:var(--medium-gray); margin-top:2px;">Direct login transfer for all Indian banks.</p>
+                    </div>
+                    <i class="fa-solid fa-building-columns" style="font-size: 1.5rem; color: var(--primary-green);"></i>
+                  </div>
+
+                  <!-- Option 4: Cash on Delivery -->
+                  <div class="payment-method-item" onclick="selectPaymentMethod(this, 'cod')">
+                    <input type="radio" name="payment_method" id="pay-cod" value="cod">
+                    <div style="flex-grow: 1;">
+                      <span>Cash on Delivery (COD)</span>
+                      <p style="font-size:0.75rem; color:var(--medium-gray); margin-top:2px;">Pay cash or scan QR upon delivery at your door.</p>
+                    </div>
+                    <i class="fa-solid fa-hand-holding-dollar" style="font-size: 1.5rem; color: var(--primary-green);"></i>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Submit button -->
+              <button type="submit" class="btn btn-primary btn-checkout" style="width: 100%; font-size: 1.1rem; padding: 16px;">
+                Proceed to Secure Payment <i class="fa-solid fa-lock" style="margin-left:5px;"></i>
+              </button>
+
+            </form>
+          </div>
+
+          <!-- Right Column Summary -->
+          <div class="checkout-summary-box">
+            <h3 style="font-family:var(--font-sans); font-size:1.2rem; color:var(--primary-green); border-bottom:1px solid var(--light-gray); padding-bottom:15px; margin-bottom:20px;">Order Summary</h3>
+            
+            <!-- Items list -->
+            <div class="order-items-summary" id="checkout-items-list">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Pricing lines -->
+            <div class="summary-item-line">
+              <span>Subtotal</span>
+              <span id="summary-subtotal">₹0.00</span>
+            </div>
+            <div class="summary-item-line" id="summary-discount-row" style="display:none; color: var(--green-success);">
+              <span>Discount</span>
+              <span id="summary-discount">-₹0.00</span>
+            </div>
+            <div class="summary-item-line">
+              <span>Delivery Fee</span>
+              <span id="summary-shipping">₹50.00</span>
+            </div>
+            
+            <div class="summary-item-line" style="border-top:1px solid var(--light-gray); padding-top:15px; margin-top:15px; font-size:1.25rem; font-weight:700; color:var(--primary-green);">
+              <span>Grand Total</span>
+              <span id="summary-total">₹0.00</span>
+            </div>
+
+            <div style="margin-top: 25px; font-size: 0.8rem; color: var(--medium-gray); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-shield-halved" style="font-size:1rem; color:var(--tea-leaf);"></i>
+              <span>Your personal data is encrypted. We source directly and package under strict quality norms.</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Razorpay / UPI Simulator Modal Overlay -->
+  <div class="gateway-modal-overlay" id="gateway-modal-overlay">
+    <div class="gateway-modal">
+      
+      <!-- Modal Header -->
+      <div class="gateway-header">
+        <div class="gateway-header-logo">
+          <i class="fa-solid fa-leaf" style="color:var(--accent-gold); font-size:1.2rem;"></i>
+          <span>Razorpay Secure</span>
+        </div>
+        <div class="gateway-amount" id="gateway-amount-display">₹0.00</div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="gateway-body">
+        
+        <div class="gateway-timer">
+          Session expires in <span id="gateway-countdown">05:00</span> minutes
+        </div>
+
+        <!-- Loader overlay -->
+        <div class="gateway-loader" id="gateway-loader">
+          <div class="spinner"></div>
+          <p id="gateway-loader-msg">Authorizing transaction with bank...</p>
+        </div>
+
+        <!-- Dynamic Modal views based on method selection -->
+        
+        <!-- View 1: UPI QR CODE (Google Pay, Paytm, etc) -->
+        <div id="modal-view-upi">
+          <p class="gateway-instruction">Scan this secure QR code using GPay, PhonePe, or BHIM to complete the order</p>
+          <div class="gateway-qr-box">
+            <!-- Simulated QR code generated using standard Unsplash image or vector visual -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=coorgharvest@upi%26pn=Coorg%20Harvest%26tn=Order%20Payment" alt="UPI QR Code Payment">
+          </div>
+          <button class="btn btn-primary" onclick="simulatePaymentProcessing('Paid')" style="font-size: 0.85rem; padding: 10px 20px; width: 100%;">
+            Simulate App Approval <i class="fa-solid fa-check" style="margin-left:5px;"></i>
+          </button>
+        </div>
+
+        <!-- View 2: Card details -->
+        <div id="modal-view-card" style="display:none;">
+          <p class="gateway-instruction">Enter your card details to process payment securely</p>
+          <div class="gateway-card-form">
+            <div class="form-group">
+              <label style="font-size:0.8rem; margin-bottom:4px;">Card Number</label>
+              <input type="text" class="form-control" style="padding:10px;" placeholder="4111 2222 3333 4444" pattern="[0-9]{16}">
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label style="font-size:0.8rem; margin-bottom:4px;">Expiry Date</label>
+                <input type="text" class="form-control" style="padding:10px;" placeholder="MM/YY">
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.8rem; margin-bottom:4px;">CVV Code</label>
+                <input type="password" class="form-control" style="padding:10px;" placeholder="***" pattern="[0-9]{3}">
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="simulatePaymentProcessing('Paid')" style="font-size: 0.85rem; padding: 10px 20px; width: 100%; margin-top:20px;">
+            Submit Payment <i class="fa-solid fa-lock" style="margin-left:5px;"></i>
+          </button>
+        </div>
+
+        <!-- View 3: Net Banking selection -->
+        <div id="modal-view-netbank" style="display:none;">
+          <p class="gateway-instruction">Select your bank from the list below</p>
+          <div class="form-group" style="text-align:left;">
+            <select class="form-control" style="padding:10px;">
+              <option>State Bank of India (SBI)</option>
+              <option>HDFC Bank</option>
+              <option>ICICI Bank</option>
+              <option>Axis Bank</option>
+              <option>Punjab National Bank</option>
+              <option>Kodagu District Cooperative Bank</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="simulatePaymentProcessing('Paid')" style="font-size: 0.85rem; padding: 10px 20px; width: 100%; margin-top:20px;">
+            Login to Net Banking <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left:5px;"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="gateway-footer">
+        <span>Payment ID: pay_${Math.random().toString(36).substring(2, 11)}</span>
+        <img src="https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=80" alt="Razorpay Trust Logo" style="display:none;">
+        <span style="font-weight:600; color:var(--primary-green);"><i class="fa-solid fa-circle-check"></i> Secured</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Injected Footer -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    let activePaymentMethod = 'upi';
+    let grandTotal = 0;
+    let timerInterval = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Clear previous payment overlay state
+      document.getElementById("gateway-modal-overlay").classList.remove("active");
+      
+      const cart = window.CoorgDB.getCart();
+      if (cart.length === 0) {
+        alert("Your shopping cart is empty. Please add items to checkout.");
+        window.location.href = "shop.html";
+        return;
+      }
+
+      renderCheckoutSummary(cart);
+    });
+
+    function renderCheckoutSummary(cart) {
+      const itemsList = document.getElementById("checkout-items-list");
+      const subtotalEl = document.getElementById("summary-subtotal");
+      const discountEl = document.getElementById("summary-discount");
+      const discountRow = document.getElementById("summary-discount-row");
+      const shippingEl = document.getElementById("summary-shipping");
+      const totalEl = document.getElementById("summary-total");
+
+      // Items list
+      itemsList.innerHTML = cart.map(item => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:0.9rem; border-bottom:1px solid var(--cream-light); padding-bottom:8px;">
+          <div style="max-width:80%;">
+            <strong style="color:var(--dark-text);">${item.name}</strong>
+            <div style="color:var(--medium-gray); font-size:0.8rem; margin-top:2px;">Qty: ${item.qty} &middot; ₹${item.price} each</div>
+          </div>
+          <span style="font-weight:600; color:var(--primary-green);">₹${(item.price * item.qty).toFixed(2)}</span>
+        </div>
+      `).join('');
+
+      // Sums
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      subtotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+
+      let discount = 0;
+      const coupon = JSON.parse(localStorage.getItem("coorg_applied_coupon"));
+      if (coupon) {
+        if (coupon.type === "percent") {
+          discount = subtotal * (coupon.value / 100);
+        } else if (coupon.type === "fixed") {
+          discount = Math.min(subtotal, coupon.value);
+        }
+        discountEl.textContent = `-₹${discount.toFixed(2)}`;
+        discountRow.style.display = "flex";
+      }
+
+      const shipping = subtotal > 500 ? 0 : 50;
+      shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
+
+      grandTotal = subtotal - discount + shipping;
+      totalEl.textContent = `₹${grandTotal.toFixed(2)}`;
+      
+      // Update amount in gateway modal
+      document.getElementById("gateway-amount-display").textContent = `₹${grandTotal.toFixed(2)}`;
+    }
+
+    // Payment method radio selection handler
+    window.selectPaymentMethod = function(cardEl, method) {
+      activePaymentMethod = method;
+      
+      // Visual toggles
+      document.querySelectorAll(".payment-method-item").forEach(item => {
+        item.classList.remove("active");
+        item.querySelector("input[type='radio']").checked = false;
+      });
+
+      cardEl.classList.add("active");
+      cardEl.querySelector("input[type='radio']").checked = true;
+
+      // Update Proceed Button text
+      const btn = document.querySelector("#checkout-form + button");
+      if (method === 'cod') {
+        document.querySelector("#checkout-form button[type='submit']").innerHTML = `Place Order (Cash on Delivery) <i class="fa-solid fa-clipboard-check" style="margin-left:5px;"></i>`;
+      } else {
+        document.querySelector("#checkout-form button[type='submit']").innerHTML = `Proceed to Secure Payment <i class="fa-solid fa-lock" style="margin-left:5px;"></i>`;
+      }
+    };
+
+    // Form submission
+    window.handleCheckoutSubmit = function(e) {
+      e.preventDefault();
+      
+      const cart = window.CoorgDB.getCart();
+      if (cart.length === 0) return;
+
+      // Validate inputs
+      const name = document.getElementById("bill-name").value.trim();
+      const phone = document.getElementById("bill-phone").value.trim();
+      const email = document.getElementById("bill-email").value.trim();
+      const address = document.getElementById("bill-address").value.trim();
+      const city = document.getElementById("bill-city").value.trim();
+      const state = document.getElementById("bill-state").value.trim();
+      const pin = document.getElementById("bill-pin").value.trim();
+
+      if (!name || !phone || !email || !address || !city || !state || !pin) {
+        alert("Please fill out all shipping details.");
+        return;
+      }
+
+      // Store billing details temporarily in sessionStorage
+      const billingDetails = { name, phone, email, address, city, state, pin };
+      sessionStorage.setItem("coorg_temp_billing", JSON.stringify(billingDetails));
+
+      // Route based on payment choice
+      if (activePaymentMethod === 'cod') {
+        // COD immediately finishes ordering
+        completeOrder("Cash on Delivery - Pending");
+      } else {
+        // Open simulated payment overlay
+        openPaymentGateway();
+      }
+    };
+
+    // Open simulated Razorpay modal
+    function openPaymentGateway() {
+      const overlay = document.getElementById("gateway-modal-overlay");
+      overlay.classList.add("active");
+      
+      // Toggle views
+      document.getElementById("modal-view-upi").style.display = activePaymentMethod === 'upi' ? 'block' : 'none';
+      document.getElementById("modal-view-card").style.display = activePaymentMethod === 'card' ? 'block' : 'none';
+      document.getElementById("modal-view-netbank").style.display = activePaymentMethod === 'netbank' ? 'block' : 'none';
+
+      // Start Countdown
+      startCountdownTimer();
+    }
+
+    function startCountdownTimer() {
+      let duration = 300; // 5 minutes
+      const display = document.getElementById("gateway-countdown");
+      
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(function() {
+        let minutes = parseInt(duration / 60, 10);
+        let seconds = parseInt(duration % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--duration < 0) {
+          clearInterval(timerInterval);
+          alert("Payment session expired. Please try again.");
+          document.getElementById("gateway-modal-overlay").classList.remove("active");
+        }
+      }, 1000);
+    }
+
+    // Simulate network delay
+    window.simulatePaymentProcessing = function(paymentStatus) {
+      const loader = document.getElementById("gateway-loader");
+      const loaderMsg = document.getElementById("gateway-loader-msg");
+      
+      loader.classList.add("active");
+      loaderMsg.textContent = "Connecting to Secure UPI Server...";
+      
+      setTimeout(function() {
+        loaderMsg.textContent = "Verifying transaction tokens...";
+        
+        setTimeout(function() {
+          loaderMsg.textContent = "Payment successful! Redirecting...";
+          
+          setTimeout(function() {
+            clearInterval(timerInterval);
+            document.getElementById("gateway-modal-overlay").classList.remove("active");
+            completeOrder(paymentStatus);
+          }, 1000);
+        }, 1200);
+      }, 1000);
+    };
+
+    // Finish placing order in localStorage database
+    function completeOrder(paymentStatus) {
+      const billing = JSON.parse(sessionStorage.getItem("coorg_temp_billing"));
+      const cart = window.CoorgDB.getCart();
+
+      const orderId = `CH-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const dateStr = new Date().toLocaleString();
+      const trackingNumber = `CHTRK${Math.floor(1000000 + Math.random() * 9000000)}`;
+
+      const newOrder = {
+        id: orderId,
+        date: dateStr,
+        name: billing.name,
+        phone: billing.phone,
+        email: billing.email,
+        address: `${billing.address}, ${billing.city}, ${billing.state} - ${billing.pin}`,
+        items: cart,
+        subtotal: cart.reduce((sum, item) => sum + (item.price * item.qty), 0),
+        discount: calculateDiscountAmount(cart),
+        shipping: cart.reduce((sum, item) => sum + (item.price * item.qty), 0) > 500 ? 0 : 50,
+        total: grandTotal,
+        paymentMethod: activePaymentMethod.toUpperCase(),
+        status: paymentStatus === 'Paid' ? 'Paid' : 'Pending COD',
+        trackingId: trackingNumber
+      };
+
+      // Place order in DB (clears cart, updates stocks, logs activity)
+      window.CoorgDB.placeOrder(newOrder);
+
+      // Redirect to success
+      window.location.href = `order-success.html?id=${orderId}`;
+    }
+
+    function calculateDiscountAmount(cart) {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const coupon = JSON.parse(localStorage.getItem("coorg_applied_coupon"));
+      if (!coupon) return 0;
+      if (coupon.type === "percent") {
+        return subtotal * (coupon.value / 100);
+      } else if (coupon.type === "fixed") {
+        return Math.min(subtotal, coupon.value);
+      }
+      return 0;
+    }
+  </script>
+</body>
+</html>

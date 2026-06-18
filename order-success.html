@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Success | Thank You for Shopping with Coorg Harvest</title>
+  
+  <meta name="description" content="Thank you for your order. Your premium organic spices, teas, and coffee from Coorg are being packed at Gonikopal.">
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- jsPDF Library for Client-side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header id="site-header"></header>
+
+  <section class="section" style="background-color: var(--cream-light); padding-top: 140px;">
+    <div class="container">
+      
+      <div class="success-card" style="background-color: var(--white); border-radius: var(--border-radius-md); box-shadow: var(--shadow-md);">
+        
+        <div class="success-icon">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        
+        <h2>Order Confirmed!</h2>
+        <p>Your transaction has been processed successfully. We've notified our farms in Gonikopal, Kodagu to prepare your fresh harvest.</p>
+
+        <!-- Order Summary details card -->
+        <div class="order-details-card" id="success-details-card">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="generateInvoicePDF()">
+            Download PDF Invoice <i class="fa-solid fa-file-pdf"></i>
+          </button>
+          <a href="shop.html" class="btn btn-secondary">
+            Continue Shopping <i class="fa-solid fa-basket-shopping"></i>
+          </a>
+        </div>
+
+        <!-- Simulated WhatsApp Notifications Panel -->
+        <div class="notifications-mock-section">
+          <h3>Simulated Order Notification Logs</h3>
+          <p style="text-align:center; font-size:0.85rem; color:var(--medium-gray); margin-bottom:30px; margin-top:-20px;">
+            <i class="fa-solid fa-circle-nodes"></i> Triggered automatically via Meta WhatsApp Business API integration.
+          </p>
+
+          <div class="whatsapp-mock-grid">
+            
+            <!-- Admin bubble -->
+            <div>
+              <h4 style="font-family:var(--font-sans); color:var(--earth-brown); margin-bottom:12px; font-weight:600; text-align:center;">
+                <i class="fa-solid fa-user-gear"></i> Admin WhatsApp Log
+              </h4>
+              <div class="whatsapp-chat-preview">
+                <div class="whatsapp-chat-header">
+                  <div class="whatsapp-chat-avatar"><i class="fa-solid fa-warehouse"></i></div>
+                  <div class="whatsapp-chat-user">
+                    <h4>Coorg Harvest Admin Hub</h4>
+                    <span>Online &middot; Sourcing Center</span>
+                  </div>
+                </div>
+                <div class="whatsapp-chat-body">
+                  <div class="whatsapp-msg sent" id="whatsapp-msg-admin">
+                    <!-- Loaded dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer bubble -->
+            <div>
+              <h4 style="font-family:var(--font-sans); color:var(--earth-brown); margin-bottom:12px; font-weight:600; text-align:center;">
+                <i class="fa-solid fa-user"></i> Customer WhatsApp Log
+              </h4>
+              <div class="whatsapp-chat-preview">
+                <div class="whatsapp-chat-header">
+                  <div class="whatsapp-chat-avatar"><i class="fa-solid fa-leaf"></i></div>
+                  <div class="whatsapp-chat-user">
+                    <h4>Coorg Harvest</h4>
+                    <span>Official Business Account</span>
+                  </div>
+                </div>
+                <div class="whatsapp-chat-body">
+                  <div class="whatsapp-msg" id="whatsapp-msg-customer">
+                    <!-- Loaded dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Injected Footer -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    let activeOrder = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get("id");
+
+      if (!orderId) {
+        renderFallback();
+        return;
+      }
+
+      activeOrder = window.CoorgDB.getOrderById(orderId);
+      if (!activeOrder) {
+        renderFallback();
+        return;
+      }
+
+      renderSuccessDetails(activeOrder);
+      populateWhatsAppLogs(activeOrder);
+    });
+
+    function renderFallback() {
+      document.getElementById("success-details-card").innerHTML = `
+        <div style="text-align:center; padding:30px; color:var(--red);">
+          <i class="fa-solid fa-circle-xmark" style="font-size:2.5rem; margin-bottom:15px;"></i>
+          <p>Order details could not be found. Please check your URL parameters or view orders in the Admin panel.</p>
+        </div>
+      `;
+    }
+
+    function renderSuccessDetails(order) {
+      const card = document.getElementById("success-details-card");
+      card.innerHTML = `
+        <h4>Receipt Overview</h4>
+        <div class="order-details-grid">
+          <div><strong>Order Number:</strong> ${order.id}</div>
+          <div><strong>Date & Time:</strong> ${order.date}</div>
+          <div><strong>Total Paid:</strong> ₹${order.total.toFixed(2)}</div>
+          <div><strong>Payment Method:</strong> ${order.paymentMethod}</div>
+          <div><strong>Payment Status:</strong> <span class="status-badge paid">${order.status}</span></div>
+          <div><strong>Shipping Agent:</strong> Coorg Blue Dart Courier</div>
+          <div><strong>Tracking Number:</strong> ${order.trackingId}</div>
+          <div><strong>Customer Name:</strong> ${order.name}</div>
+          <div style="grid-column: 1 / -1; margin-top:5px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
+            <strong>Shipping Destination:</strong> ${order.address}
+          </div>
+        </div>
+      `;
+    }
+
+    // Generate simulated messages for WhatsApp logs
+    function populateWhatsAppLogs(order) {
+      const adminMsg = document.getElementById("whatsapp-msg-admin");
+      const customerMsg = document.getElementById("whatsapp-msg-customer");
+      
+      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Admin Message layout
+      const itemsListText = order.items.map(item => `   - ${item.name} (Qty: ${item.qty})`).join('\n');
+      
+      adminMsg.innerHTML = `*🚨 NEW COORG HARVEST ORDER PLACED*
+
+*Order No:* ${order.id}
+*Date:* ${order.date}
+*Customer:* ${order.name}
+*Phone:* ${order.phone}
+*Address:* ${order.address}
+
+*Ordered Items:*
+${itemsListText}
+
+*Subtotal:* ₹${order.subtotal.toFixed(2)}
+*Discount:* ₹${order.discount.toFixed(2)}
+*Shipping:* ₹${order.shipping.toFixed(2)}
+*Grand Total:* ₹${order.total.toFixed(2)}
+
+*Payment Method:* ${order.paymentMethod}
+*Payment Status:* ${order.status}
+
+_Instructions: Pack at Gonikopal hub immediately. Print shipping label._<span class="whatsapp-msg-time">${currentTime}</span>`;
+
+      // Customer Message layout
+      customerMsg.innerHTML = `🌿 *COORG HARVEST CONFIRMATION*
+      
+Dear *${order.name}*, 
+
+Thank you for your order! Your wellness and spices package is confirmed.
+
+*Order Details:*
+- Order Number: ${order.id}
+- Total Amount: ₹${order.total.toFixed(2)}
+- Payment Method: ${order.paymentMethod}
+- Payment Status: Verified ${order.status}
+
+*Tracking Details:*
+You can track your package via Coorg Blue Dart using Tracking ID: *${order.trackingId}*.
+
+*Invoice Download:*
+Your professional GST invoice is generated and attached below (PDF). 
+
+_Sourced ethically from Kodagu plantations._
+_Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${currentTime}</span>`;
+    }
+
+    // CLIENT-SIDE PDF GENERATION USING JSPDF
+    window.generateInvoicePDF = function() {
+      if (!activeOrder) return;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      const themeColor = "#2E5E3E"; // primary forest green
+      const goldColor = "#C5A059";  // accent gold
+
+      // 1. BRAND BLOCK & HEADER
+      doc.setFillColor(12, 32, 18); // Dark forest green
+      doc.rect(0, 0, 210, 40, "F");
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("COORG HARVEST", 15, 18);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(197, 160, 89); // gold
+      doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Email: info@coorgharvest.com", 145, 15);
+      doc.text("Phone: +91 9880077218", 145, 20);
+      doc.text("Bypass Road, Gonikopal, Kodagu", 145, 25);
+      doc.text("PIN Code: 571213, Karnataka, India", 145, 30);
+
+      // 2. INVOICE META
+      doc.setTextColor(29, 29, 29);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("TAX INVOICE", 15, 55);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Invoice Number: ${activeOrder.id}`, 15, 63);
+      doc.text(`Invoice Date: ${activeOrder.date}`, 15, 69);
+      doc.text(`Payment Gateway ID: pay_${Math.floor(100000 + Math.random() * 900000)}`, 15, 75);
+      doc.text(`Payment Status: ${activeOrder.status}`, 15, 81);
+
+      // 3. CUSTOMER DETAILS
+      doc.setFont("helvetica", "bold");
+      doc.text("Billed & Shipped To:", 125, 55);
+      doc.setFont("helvetica", "normal");
+      
+      // Handle text wrap for long addresses
+      const splitAddress = doc.splitTextToSize(activeOrder.address, 75);
+      doc.text(activeOrder.name, 125, 63);
+      doc.text(`Phone: ${activeOrder.phone}`, 125, 69);
+      doc.text(`Email: ${activeOrder.email}`, 125, 75);
+      doc.text(splitAddress, 125, 81);
+
+      // 4. ITEMS TABLE HEADERS
+      doc.setDrawColor(232, 226, 213);
+      doc.setFillColor(247, 243, 232); // warm cream
+      doc.rect(15, 105, 180, 8, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(46, 94, 62);
+      doc.text("Item Sourced Product Name", 18, 110.5);
+      doc.text("Price (INR)", 115, 110.5);
+      doc.text("Qty", 150, 110.5);
+      doc.text("Total (INR)", 172, 110.5);
+      
+      // Table line
+      doc.line(15, 113, 195, 113);
+
+      // 5. TABLE BODY ITEMS
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(29, 29, 29);
+      let currentY = 120;
+
+      activeOrder.items.forEach(item => {
+        doc.text(item.name, 18, currentY);
+        doc.text(`Rs. ${item.price.toFixed(2)}`, 115, currentY);
+        doc.text(item.qty.toString(), 151, currentY);
+        
+        const lineTotal = item.price * item.qty;
+        doc.text(`Rs. ${lineTotal.toFixed(2)}`, 172, currentY);
+        
+        currentY += 8;
+      });
+
+      doc.line(15, currentY + 2, 195, currentY + 2);
+      currentY += 12;
+
+      // 6. PRICING CALCULATIONS (Subtotal, GST, discounts)
+      // Assume 5% GST (CGST 2.5% + SGST 2.5%) is included in prices
+      const gstRate = 0.05;
+      const subTotalVal = activeOrder.subtotal;
+      const gstAmt = (subTotalVal / (1 + gstRate)) * gstRate;
+      const cgstAmt = gstAmt / 2;
+      const sgstAmt = gstAmt / 2;
+
+      doc.text("Subtotal:", 125, currentY);
+      doc.text(`Rs. ${activeOrder.subtotal.toFixed(2)}`, 172, currentY);
+      currentY += 6;
+
+      doc.text("CGST (2.5%):", 125, currentY);
+      doc.text(`Rs. ${cgstAmt.toFixed(2)}`, 172, currentY);
+      currentY += 6;
+
+      doc.text("SGST (2.5%):", 125, currentY);
+      doc.text(`Rs. ${sgstAmt.toFixed(2)}`, 172, currentY);
+      currentY += 6;
+
+      if (activeOrder.discount > 0) {
+        doc.setTextColor(39, 174, 96);
+        doc.text("Coupon Discount:", 125, currentY);
+        doc.text(`-Rs. ${activeOrder.discount.toFixed(2)}`, 172, currentY);
+        doc.setTextColor(29, 29, 29);
+        currentY += 6;
+      }
+
+      doc.text("Delivery Charges:", 125, currentY);
+      doc.text(activeOrder.shipping === 0 ? "FREE" : `Rs. ${activeOrder.shipping.toFixed(2)}`, 172, currentY);
+      currentY += 8;
+
+      doc.line(125, currentY - 2, 195, currentY - 2);
+
+      // Grand Total
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(46, 94, 62);
+      doc.text("Grand Total:", 125, currentY + 3);
+      doc.text(`Rs. ${activeOrder.total.toFixed(2)}`, 172, currentY + 3);
+
+      // 7. MOCK QR CODE & LEGAL STAMP
+      doc.setDrawColor(46, 94, 62);
+      doc.rect(15, currentY - 20, 30, 30);
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(138, 129, 112);
+      doc.text("VERIFIED TRANSACTION", 16, currentY + 13);
+      doc.text("GSTIN: 29AAXFC8802R1ZH", 16, currentY + 16);
+      
+      // Simple QR Code Box pattern drawing inside PDF
+      doc.setFillColor(46, 94, 62);
+      doc.rect(18, currentY - 17, 7, 7);
+      doc.rect(35, currentY - 17, 7, 7);
+      doc.rect(18, currentY - 10, 7, 7);
+      doc.rect(26, currentY - 14, 5, 5);
+      doc.rect(32, currentY - 7, 4, 4);
+
+      // 8. SIGNATURE AND TERMS
+      doc.setFontSize(8);
+      doc.setTextColor(29, 29, 29);
+      doc.setFont("helvetica", "bold");
+      doc.text("Terms & Conditions:", 15, currentY + 28);
+      doc.setFont("helvetica", "normal");
+      doc.text("1. All items are packed fresh under organic standards.", 15, 33 + currentY);
+      doc.text("2. Hand-harvested honey can crystallize naturally.", 15, 37 + currentY);
+      doc.text("3. Grievances can be submitted directly on info@coorgharvest.com.", 15, 41 + currentY);
+
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(46, 94, 62);
+      doc.setFontSize(10);
+      doc.text("Thank you for supporting Kodagu's small farmers!", 105, 275, null, null, "center");
+
+      // Save PDF
+      doc.save(`Invoice_${activeOrder.id}.pdf`);
+    };
+  </script>
+</body>
+</html>

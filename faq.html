@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frequently Asked Questions (FAQ) | Coorg Harvest Support</title>
+  
+  <meta name="description" content="Find answers regarding Coorg Harvest shipping policies, cash on delivery availability, organic spice cultivation, and wild forest honey harvesting.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header id="site-header"></header>
+
+  <!-- Page Header Title Block -->
+  <section class="page-header-block">
+    <div class="container">
+      <h1>Frequently Asked Questions</h1>
+      <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>FAQs</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion section -->
+  <section class="section" style="background-color: var(--white);">
+    <div class="container">
+      
+      <div class="section-header" style="margin-bottom:40px;">
+        <h2>Got Questions? We Have Answers.</h2>
+        <p>Type in your keywords below to filter search frequently asked questions instantly.</p>
+        
+        <!-- Live FAQ Search box -->
+        <div style="max-width:500px; margin: 30px auto 0 auto; position: relative;">
+          <input type="text" id="faq-search" class="form-control" placeholder="Search FAQs (e.g., honey, COD, shipping)..." style="padding: 14px 20px 14px 45px; border-radius: var(--border-radius-xl); box-shadow: var(--shadow-sm);">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--medium-gray);"></i>
+        </div>
+      </div>
+
+      <!-- FAQ Items List -->
+      <div class="faq-list" id="faq-list-container">
+        
+        <!-- Item 1 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Where are Coorg Harvest products sourced from?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Our products are sourced 100% directly from shade-grown agricultural plantations, private forest estates, and traditional indigenous gatherer collectives in the hills of <strong>Kodagu (Coorg), Karnataka, India</strong>. Our sorting and packaging unit is located in Gonikopal, Coorg.</p>
+          </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Do you support Cash on Delivery (COD)?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Yes, we support Cash on Delivery (COD) for orders shipped to major pin codes across India. You can select Cash on Delivery under our secure payment options on the checkout page.</p>
+          </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Is your Forest Honey pasteurized or heated?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>Absolutely not. Our <strong>Raw Wild Forest Honey</strong> is unfiltered and unpasteurized. It is extracted manually from forest combs by indigenous tribes and strained using basic cloth to retain natural enzymes, floral pollen, and minerals. Because it is 100% raw, it may crystallize over time, which is the ultimate seal of honey purity.</p>
+          </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How long will it take for my order to be delivered?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>We pack and dispatch orders from our Gonikopal hub within 24-48 hours. Shipments to South Indian cities (Bangalore, Chennai, Mysore) usually arrive in 2-3 business days. Deliveries to other parts of India (Mumbai, Delhi, Kolkata, etc.) take between 4-6 business days. A tracking link is automatically shared on your WhatsApp.</p>
+          </div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>What are the shipping charges?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>We charge a flat shipping fee of <strong>₹50</strong> for orders below ₹500. For orders of <strong>₹500 and above, shipping is completely FREE</strong> across India.</p>
+          </div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>How should I store whole spices like black pepper and green cardamom?</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="faq-answer">
+            <p>To retain their rich essential oils, spices should be stored in dry, airtight glass jars or opaque steel canisters. Store them in a cool, dark kitchen cupboard away from gas stoves, direct sunlight, and moisture. Avoid using wet spoons to scoop the spices.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Injected Footer -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // 1. Accordion click handlers
+      const faqItems = document.querySelectorAll(".faq-item");
+      
+      faqItems.forEach(item => {
+        const question = item.querySelector(".faq-question");
+        
+        question.addEventListener("click", function() {
+          const isActive = item.classList.contains("active");
+          
+          // Close other items
+          faqItems.forEach(i => i.classList.remove("active"));
+          
+          if (!isActive) {
+            item.classList.add("active");
+          }
+        });
+      });
+
+      // 2. Live FAQ Search filter
+      const searchInput = document.getElementById("faq-search");
+      
+      searchInput.addEventListener("input", function() {
+        const query = this.value.trim().toLowerCase();
+        
+        faqItems.forEach(item => {
+          const qText = item.querySelector(".faq-question span").textContent.toLowerCase();
+          const aText = item.querySelector(".faq-answer p").textContent.toLowerCase();
+          
+          if (qText.includes(query) || aText.includes(query)) {
+            item.style.display = "block";
+          } else {
+            item.style.display = "none";
+            item.classList.remove("active"); // close if open
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

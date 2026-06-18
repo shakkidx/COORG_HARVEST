@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Login | Coorg Harvest Admin Portal</title>
+  
+  <!-- Robot crawler index blocks -->
+  <meta name="robots" content="noindex, nofollow">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0c2012 0%, #172C1E 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+    
+    .login-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--border-radius-md);
+      padding: 40px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .login-logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .login-logo img {
+      height: 70px;
+      width: auto;
+      object-fit: contain;
+      background: white;
+      padding: 6px;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-md);
+      margin: 0 auto 15px auto;
+    }
+    
+    .login-logo h2 {
+      color: var(--white);
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      margin-top: 5px;
+    }
+    
+    .login-logo span {
+      color: var(--accent-gold);
+    }
+
+    .form-group label {
+      color: var(--warm-cream);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .form-control-login {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--border-radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--white);
+      font-size: 0.95rem;
+      transition: var(--transition-fast);
+      outline: none;
+    }
+
+    .form-control-login:focus {
+      border-color: var(--accent-gold);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .login-error {
+      color: #E74C3C;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .lockout-alert {
+      background-color: rgba(192, 57, 43, 0.1);
+      border: 1px solid var(--red);
+      color: #E74C3C;
+      padding: 12px 16px;
+      border-radius: var(--border-radius-sm);
+      font-size: 0.85rem;
+      text-align: center;
+      margin-bottom: 20px;
+      display: none;
+      font-weight: 500;
+    }
+    
+    .lockout-time {
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .otp-overlay {
+      display: none;
+      animation: fadeLogin 0.4s ease-in-out;
+    }
+
+    @keyframes fadeLogin {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    
+    <!-- Lockout Warning -->
+    <div class="lockout-alert" id="lockout-alert">
+      Access locked due to excessive failed attempts.<br>Please wait <span id="lockout-timer" class="lockout-time">05:00</span> before retrying.
+    </div>
+    
+    <div class="login-card">
+      
+      <!-- BRAND LOGO -->
+      <div class="login-logo">
+        <img src="logo.png" alt="Coorg Harvest Brand Logo">
+        <h2>Admin <span>Access</span></h2>
+        <p style="font-size:0.75rem; color:rgba(247, 243, 232, 0.5); margin-top:5px; text-transform:uppercase; letter-spacing:1px;">Secure Authentication Gateway</p>
+      </div>
+
+      <!-- VIEW A: CREDENTIALS SUBMISSION -->
+      <form id="credentials-form" onsubmit="handleCredentialsSubmit(event)">
+        <div class="form-group">
+          <label for="login-username">Administrator Username</label>
+          <input type="text" id="login-username" class="form-control-login" placeholder="coorg_harvest" required autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+          <label for="login-password">Password Key</label>
+          <input type="password" id="login-password" class="form-control-login" placeholder="••••••••••••" required autocomplete="current-password">
+        </div>
+
+        <div id="login-error-msg" class="login-error"></div>
+
+        <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width: 100%; margin-top: 25px; border-radius: var(--border-radius-sm); padding:12px;">
+          Verify Credentials <i class="fa-solid fa-shield-halved" style="margin-left:5px;"></i>
+        </button>
+      </form>
+
+      <!-- VIEW B: TWO-FACTOR VERIFICATION OTP (Hidden initially) -->
+      <div class="otp-overlay" id="otp-view">
+        <p style="font-size:0.85rem; color:var(--warm-cream); text-align:center; margin-bottom:20px; line-height:1.4;">
+          <i class="fa-solid fa-mobile-screen-button" style="color:var(--accent-gold); font-size:1.1rem; display:block; margin-bottom:8px;"></i>
+          A 6-digit verification OTP has been dispatched to your registered phone number.<br>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:block; margin-top:5px;">(Simulated OTP Code: <strong>123456</strong>)</span>
+        </p>
+
+        <form id="otp-form" onsubmit="handleOtpSubmit(event)">
+          <div class="form-group">
+            <label for="login-otp">Two-Factor OTP Code</label>
+            <input type="text" id="login-otp" class="form-control-login" maxlength="6" pattern="[0-9]{6}" placeholder="E.g., 123456" required style="text-align:center; letter-spacing:6px; font-size:1.4rem;">
+          </div>
+
+          <div id="otp-error-msg" class="login-error"></div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 25px; border-radius: var(--border-radius-sm); padding:12px; background-color: var(--accent-gold); color:var(--white);">
+            Verify & Authenticate <i class="fa-solid fa-circle-check" style="margin-left:5px;"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Database Script -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  
+  <script>
+    const expectedUsername = "coorg_harvest";
+    // SHA-256 of "fizal@9902?*&12"
+    const expectedPasswordHash = "197bc8954b7ad2c834f53f324e611e249cb4669dd62b10bb41b143987241c09e";
+    
+    let lockoutInterval = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Clean previous session state
+      sessionStorage.removeItem("coorg_admin_logged_in");
+      sessionStorage.removeItem("coorg_admin_username");
+
+      checkLockoutState();
+    });
+
+    // Hash check using Web Crypto browser APIs
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Check if account is locked
+    function checkLockoutState() {
+      const lockUntil = parseInt(localStorage.getItem("coorg_lockout_until"));
+      if (lockUntil && lockUntil > Date.now()) {
+        enableLockoutUI(lockUntil);
+      } else {
+        localStorage.removeItem("coorg_lockout_until");
+        document.getElementById("lockout-alert").style.display = "none";
+        setFormDisabled(false);
+      }
+    }
+
+    function setFormDisabled(disabled) {
+      document.getElementById("login-username").disabled = disabled;
+      document.getElementById("login-password").disabled = disabled;
+      document.getElementById("btn-login-submit").disabled = disabled;
+    }
+
+    function enableLockoutUI(lockUntil) {
+      setFormDisabled(true);
+      const alertBox = document.getElementById("lockout-alert");
+      const timerEl = document.getElementById("lockout-timer");
+      alertBox.style.display = "block";
+
+      if (lockoutInterval) clearInterval(lockoutInterval);
+
+      lockoutInterval = setInterval(function() {
+        const remaining = lockUntil - Date.now();
+        if (remaining <= 0) {
+          clearInterval(lockoutInterval);
+          checkLockoutState();
+        } else {
+          let mins = Math.floor(remaining / 60000);
+          let secs = Math.floor((remaining % 60000) / 1000);
+          mins = mins < 10 ? "0" + mins : mins;
+          secs = secs < 10 ? "0" + secs : secs;
+          timerEl.textContent = `${mins}:${secs}`;
+        }
+      }, 1000);
+    }
+
+    // View A - Credentials Submission
+    async function handleCredentialsSubmit(e) {
+      e.preventDefault();
+      
+      const usernameInput = document.getElementById("login-username").value.trim();
+      const passwordInput = document.getElementById("login-password").value;
+      const errorMsg = document.getElementById("login-error-msg");
+      
+      errorMsg.style.display = "none";
+
+      // Check username matching
+      if (usernameInput !== expectedUsername) {
+        handleFailedAttempt("Invalid username or password key.");
+        return;
+      }
+
+      // Hash password and match
+      const enteredHash = await sha256(passwordInput);
+      if (enteredHash !== expectedPasswordHash) {
+        handleFailedAttempt("Invalid username or password key.");
+        return;
+      }
+
+      // Credentials Valid! Clear failed count & Transition to OTP 2FA view
+      localStorage.removeItem("coorg_failed_attempts");
+      document.getElementById("credentials-form").style.display = "none";
+      document.getElementById("otp-view").style.display = "block";
+      document.getElementById("login-otp").focus();
+    }
+
+    // View B - OTP verification
+    function handleOtpSubmit(e) {
+      e.preventDefault();
+      
+      const otpInput = document.getElementById("login-otp").value.trim();
+      const otpError = document.getElementById("otp-error-msg");
+
+      if (otpInput === "123456") {
+        // Authenticate session
+        sessionStorage.setItem("coorg_admin_logged_in", "true");
+        sessionStorage.setItem("coorg_admin_username", expectedUsername);
+
+        // Audit Trail successful login in DB
+        window.CoorgDB.logActivity(`Audit log: Super Admin '${expectedUsername}' logged in successfully (IP: 192.168.1.101).`);
+
+        // Redirect
+        window.location.replace("admin.html");
+      } else {
+        otpError.textContent = "Invalid OTP code verification token. Try again.";
+        otpError.style.display = "block";
+        window.CoorgDB.logActivity(`Audit alert: Failed 2FA verification attempt for user '${expectedUsername}'.`);
+      }
+    }
+
+    // Handles locking out
+    function handleFailedAttempt(message) {
+      const errorMsg = document.getElementById("login-error-msg");
+      errorMsg.textContent = message;
+      errorMsg.style.display = "block";
+
+      let attempts = parseInt(localStorage.getItem("coorg_failed_attempts")) || 0;
+      attempts += 1;
+      localStorage.setItem("coorg_failed_attempts", attempts);
+
+      // Audit log failed login
+      window.CoorgDB.logActivity(`Security Alert: Failed administrator login attempt (Attempt ${attempts}/5).`);
+
+      if (attempts >= 5) {
+        const lockDuration = 5 * 60 * 1000; // 5 minutes
+        const lockTime = Date.now() + lockDuration;
+        localStorage.setItem("coorg_lockout_until", lockTime);
+        localStorage.removeItem("coorg_failed_attempts");
+        
+        window.CoorgDB.logActivity("Security Alert: Excessive failed logins. Login interface locked for 5 minutes.");
+        checkLockoutState();
+      }
+    }
+  </script>
+</body>
+</html>

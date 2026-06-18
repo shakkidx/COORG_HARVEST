@@ -1,0 +1,50 @@
+# Local Environment Configuration files
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.production.local
+.env.development.local
+.env.local
+
+# Frontend local secrets config containing keys
+js/config.js
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build and deployment folders
+.next/
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+
+# Log files and reports
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary files
+tmp/
+temp/
+.temp/

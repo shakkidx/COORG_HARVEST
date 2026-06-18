@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Online | Coorg Harvest Spices, Teas & Coffee Catalog</title>
+  
+  <meta name="description" content="Explore our rich selection of shade-grown coffee, pure cardamom, black pepper, forest honey, and organic wellness items sourced from Coorg estates.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header id="site-header"></header>
+
+  <!-- Page Header Title Block -->
+  <section class="page-header-block">
+    <div class="container">
+      <h1>Our Products</h1>
+      <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>Shop Catalog</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shop Catalog Section -->
+  <section class="section" style="background-color: var(--cream-light);">
+    <div class="container">
+      <div class="shop-layout">
+        
+        <!-- Sidebar Filters -->
+        <aside class="shop-sidebar">
+          
+          <!-- Filter: Category Search -->
+          <div class="filter-section">
+            <h3 class="filter-title">Search Products</h3>
+            <div style="position: relative;">
+              <input type="text" id="sidebar-search" placeholder="Type name..." class="form-control" style="padding: 10px 15px; font-size: 0.9rem;">
+            </div>
+          </div>
+
+          <!-- Filter: Categories -->
+          <div class="filter-section">
+            <h3 class="filter-title">Categories</h3>
+            <ul class="filter-list" id="category-filter-list">
+              <li>
+                <label>
+                  <input type="checkbox" value="Premium Spices" class="cat-checkbox">
+                  <span>Premium Spices</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="Herbal Teas" class="cat-checkbox">
+                  <span>Herbal Teas</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="Coffee Collection" class="cat-checkbox">
+                  <span>Coffee Collection</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="Forest Honey" class="cat-checkbox">
+                  <span>Forest Honey</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="Wellness Products" class="cat-checkbox">
+                  <span>Wellness Products</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="Coorg Specialties" class="cat-checkbox">
+                  <span>Coorg Specialties</span>
+                </label>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Filter: Price Range -->
+          <div class="filter-section">
+            <h3 class="filter-title">Filter by Price</h3>
+            <div class="price-range-wrapper">
+              <input type="range" id="price-slider" min="100" max="1000" value="1000" step="10" class="price-range-slider">
+              <div class="price-values">
+                <span>Min: ₹100</span>
+                <span>Max: <strong id="price-slider-value">₹1000</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter: Rating -->
+          <div class="filter-section">
+            <h3 class="filter-title">Minimum Rating</h3>
+            <ul class="filter-list">
+              <li>
+                <label>
+                  <input type="checkbox" value="4.8" class="rating-checkbox">
+                  <span><i class="fa-solid fa-star" style="color:#F39C12;"></i> 4.8 & Above</span>
+                </label>
+              </li>
+              <li>
+                <label>
+                  <input type="checkbox" value="4.6" class="rating-checkbox">
+                  <span><i class="fa-solid fa-star" style="color:#F39C12;"></i> 4.6 & Above</span>
+                </label>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Reset Filter btn -->
+          <button class="btn btn-secondary" id="btn-reset-filters" style="width:100%; padding:10px; font-size:0.85rem;">Clear Filters</button>
+
+        </aside>
+
+        <!-- Right Content Column: Grid & Sorting -->
+        <main>
+          
+          <!-- Toolbar -->
+          <div class="shop-toolbar">
+            <div class="results-count">
+              Showing <span id="displayed-count">0</span> of <span id="total-count">0</span> items
+            </div>
+            
+            <div class="sort-select-wrapper">
+              <label for="sort-dropdown" style="font-size:0.9rem; margin-right:10px; color:var(--medium-gray);">Sort By:</label>
+              <select id="sort-dropdown">
+                <option value="popular">Popularity / Rating</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Products Grid -->
+          <div class="product-grid" id="shop-products-grid">
+            <!-- Populated dynamically -->
+          </div>
+
+        </main>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Injected Footer -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // 1. Initial configuration
+      const products = window.CoorgDB.getProducts();
+      
+      const sidebarSearch = document.getElementById("sidebar-search");
+      const categoryCheckboxes = document.querySelectorAll(".cat-checkbox");
+      const ratingCheckboxes = document.querySelectorAll(".rating-checkbox");
+      const priceSlider = document.getElementById("price-slider");
+      const priceSliderValue = document.getElementById("price-slider-value");
+      const sortDropdown = document.getElementById("sort-dropdown");
+      const btnResetFilters = document.getElementById("btn-reset-filters");
+      
+      // Update price display
+      priceSlider.addEventListener("input", function() {
+        priceSliderValue.textContent = `₹${this.value}`;
+        applyFilters();
+      });
+
+      // 2. Parse URL parameters for categories or search queries on load
+      const urlParams = new URLSearchParams(window.location.search);
+      const catParam = urlParams.get("category");
+      const searchParam = urlParams.get("search");
+
+      if (catParam) {
+        categoryCheckboxes.forEach(cb => {
+          if (cb.value.toLowerCase() === catParam.toLowerCase()) {
+            cb.checked = true;
+          }
+        });
+      }
+      if (searchParam) {
+        sidebarSearch.value = searchParam;
+      }
+
+      // 3. Event listeners for live filtering
+      sidebarSearch.addEventListener("input", applyFilters);
+      sortDropdown.addEventListener("change", applyFilters);
+      categoryCheckboxes.forEach(cb => cb.addEventListener("change", applyFilters));
+      ratingCheckboxes.forEach(cb => cb.addEventListener("change", applyFilters));
+
+      // Reset filters logic
+      btnResetFilters.addEventListener("click", function() {
+        sidebarSearch.value = "";
+        categoryCheckboxes.forEach(cb => cb.checked = false);
+        ratingCheckboxes.forEach(cb => cb.checked = false);
+        priceSlider.value = 1000;
+        priceSliderValue.textContent = "₹1000";
+        sortDropdown.value = "popular";
+        applyFilters();
+      });
+
+      // 4. Initial filter execution
+      applyFilters();
+
+      // Core filter computation
+      function applyFilters() {
+        let filtered = [...products];
+
+        // Search text
+        const query = sidebarSearch.value.trim().toLowerCase();
+        if (query) {
+          filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(query) || 
+            p.category.toLowerCase().includes(query) ||
+            p.description.toLowerCase().includes(query)
+          );
+        }
+
+        // Category checkboxes (if any are checked)
+        const checkedCats = Array.from(categoryCheckboxes)
+          .filter(cb => cb.checked)
+          .map(cb => cb.value.toLowerCase());
+          
+        if (checkedCats.length > 0) {
+          filtered = filtered.filter(p => checkedCats.includes(p.category.toLowerCase()));
+        }
+
+        // Price slider limit
+        const maxPrice = parseFloat(priceSlider.value);
+        filtered = filtered.filter(p => p.price <= maxPrice);
+
+        // Rating checkboxes (match active minimum)
+        const checkedRatings = Array.from(ratingCheckboxes)
+          .filter(cb => cb.checked)
+          .map(cb => parseFloat(cb.value));
+
+        if (checkedRatings.length > 0) {
+          const minRequiredRating = Math.min(...checkedRatings);
+          filtered = filtered.filter(p => p.rating >= minRequiredRating);
+        }
+
+        // Sorting
+        const sortType = sortDropdown.value;
+        if (sortType === "popular") {
+          filtered.sort((a, b) => b.rating - a.rating); // Sort rating high to low
+        } else if (sortType === "price-asc") {
+          filtered.sort((a, b) => a.price - b.price); // Price low to high
+        } else if (sortType === "price-desc") {
+          filtered.sort((a, b) => b.price - a.price); // Price high to low
+        }
+
+        // Display results
+        renderProducts(filtered);
+      }
+
+      // DOM rendering functions
+      function renderProducts(items) {
+        const grid = document.getElementById("shop-products-grid");
+        const displayedCountEl = document.getElementById("displayed-count");
+        const totalCountEl = document.getElementById("total-count");
+
+        displayedCountEl.textContent = items.length;
+        totalCountEl.textContent = products.length;
+
+        if (items.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 0; color: var(--medium-gray);">
+              <i class="fa-solid fa-cloud-rain" style="font-size: 3rem; margin-bottom: 20px; color: var(--light-gray);"></i>
+              <h3>No Products Match Your Filters</h3>
+              <p style="margin-top: 10px;">Try adjusting your search query, price sliders, or category selections.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = items.map(p => `
+          <div class="product-card">
+            <div class="product-card-img-wrapper">
+              <a href="product.html?id=${p.id}">
+                <img src="${p.image}" alt="${p.name}" class="product-card-img">
+              </a>
+              ${p.badge ? `<span class="badge-tag">${p.badge}</span>` : ''}
+              <button class="wishlist-btn" onclick="toggleWishlist(this, '${p.id}')" title="Add to Wishlist">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            </div>
+            <div class="product-card-body">
+              <div class="product-card-category">${p.category}</div>
+              <h3 class="product-card-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+              <div class="product-rating">
+                ${getStarHTML(p.rating)}
+                <span>(${p.ratingCount})</span>
+              </div>
+              <div class="product-card-price-row">
+                <div class="price">
+                  ₹${p.price}
+                  ${p.oldPrice ? `<span class="price-old">₹${p.oldPrice}</span>` : ''}
+                </div>
+                <button class="btn-add-cart" onclick="window.CoorgDB.addToCart('${p.id}'); window.openCartDrawer();" title="Add to Basket">
+                  <i class="fa-solid fa-basket-shopping"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    });
+
+    // Helper: generate star ratings HTML
+    function getStarHTML(rating) {
+      let stars = "";
+      const fullStars = Math.floor(rating);
+      const halfStar = rating % 1 >= 0.5;
+      
+      for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+          stars += '<i class="fa-solid fa-star"></i>';
+        } else if (i === fullStars + 1 && halfStar) {
+          stars += '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+          stars += '<i class="fa-regular fa-star"></i>';
+        }
+      }
+      return stars;
+    }
+
+    // Helper: Wishlist toggle visual
+    function toggleWishlist(btn, id) {
+      btn.classList.toggle("active");
+      const icon = btn.querySelector("i");
+      if (btn.classList.contains("active")) {
+        icon.className = "fa-solid fa-heart";
+        showToast("Added to your wishlist!");
+      } else {
+        icon.className = "fa-regular fa-heart";
+        showToast("Removed from wishlist.");
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.style.position = "fixed";
+      toast.style.bottom = "110px";
+      toast.style.right = "30px";
+      toast.style.backgroundColor = "var(--primary-green)";
+      toast.style.color = "var(--white)";
+      toast.style.padding = "12px 24px";
+      toast.style.borderRadius = "var(--border-radius-xl)";
+      toast.style.boxShadow = "var(--shadow-md)";
+      toast.style.fontSize = "0.9rem";
+      toast.style.zIndex = "999";
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(20px)";
+      toast.style.transition = "var(--transition-smooth)";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+      }, 100);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(20px)";
+        setTimeout(() => toast.remove(), 400);
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

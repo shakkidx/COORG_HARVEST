@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (function() {
+      const loggedIn = sessionStorage.getItem("coorg_admin_logged_in") === "true";
+      if (!loggedIn) {
+        window.location.replace("admin-login.html");
+      }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Coorg Harvest Store Management</title>
+  
+  <meta name="description" content="Manage products, view inventory levels, track customer transactions, analyze sales, and edit coupon codes.">
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- jsPDF Library for Admin Invoice Reprinting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="admin-layout">
+    
+    <!-- Left Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo" style="text-align: center; justify-content: center; padding: 0 15px; margin-bottom: 15px;">
+        <img src="logo.png" alt="Coorg Harvest Logo" style="height: 65px; width: auto; object-fit: contain; background: white; padding: 4px; border-radius: 8px;">
+      </div>
+      
+      <!-- Profile Widget -->
+      <div style="padding: 10px 30px 20px 30px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; font-size: 0.85rem;">
+        <div style="font-weight: 600; color: var(--accent-gold); display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-user-shield"></i> <span id="admin-profile-name">coorg_harvest</span>
+        </div>
+        <div style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 4px;">Role: Super Admin</div>
+      </div>
+      
+      <div class="admin-menu-list">
+        <a href="#" class="admin-menu-item active" data-view="dashboard-view">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </a>
+        <a href="#" class="admin-menu-item" data-view="products-view">
+          <i class="fa-solid fa-boxes-stacked"></i> Products CRUD
+        </a>
+        <a href="#" class="admin-menu-item" data-view="orders-view">
+          <i class="fa-solid fa-file-invoice-dollar"></i> Orders Log
+        </a>
+        <a href="#" class="admin-menu-item" data-view="coupons-view">
+          <i class="fa-solid fa-ticket"></i> Coupon Manager
+        </a>
+        <a href="#" class="admin-menu-item" id="admin-logout-btn" style="color: #E74C3C;">
+          <i class="fa-solid fa-power-off"></i> Log Out Session
+        </a>
+        <a href="index.html" class="admin-menu-item" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px;">
+          <i class="fa-solid fa-arrow-left"></i> View Live Store
+        </a>
+      </div>
+    </aside>
+
+    <!-- Right Content Area -->
+    <main class="admin-content-area">
+      
+      <!-- Top header row -->
+      <div class="admin-header-row">
+        <div>
+          <h1 style="font-size:1.8rem;" id="admin-view-title">Dashboard Overview</h1>
+          <p style="font-size:0.85rem; color:var(--medium-gray);" id="admin-date-string">Thursday, June 18, 2026</p>
+        </div>
+        
+        <!-- Quick action button -->
+        <button class="btn btn-primary" id="admin-header-btn" onclick="openAddProductModal()">
+          Add New Product <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <!-- VIEW 1: DASHBOARD METRICS VIEW -->
+      <div class="admin-view-tab active" id="dashboard-view">
+        
+        <!-- Stats summary row -->
+        <div class="admin-stats-grid">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Total Revenue</p>
+              <div class="stat-box-num" id="stat-revenue">₹0.00</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Total Orders</p>
+              <div class="stat-box-num" id="stat-orders">0</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-receipt"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Products count</p>
+              <div class="stat-box-num" id="stat-products">0</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-box"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Low Stock Items</p>
+              <div class="stat-box-num" id="stat-low-stock" style="color:var(--red);">0</div>
+            </div>
+            <div class="stat-box-icon" style="background-color:rgba(192,57,43,0.08); color:var(--red);"><i class="fa-solid fa-circle-exclamation"></i></div>
+          </div>
+        </div>
+
+        <!-- Charts and Activities -->
+        <div class="admin-charts-grid">
+          
+          <!-- Weekly Sales Chart -->
+          <div class="admin-chart-card">
+            <div class="chart-title-row">
+              <h3>Weekly Sales Trend (Simulated)</h3>
+              <span style="font-size:0.8rem; color:var(--medium-gray);">Last 5 Orders</span>
+            </div>
+            <div class="chart-container-visual" id="admin-chart-container">
+              <!-- Rendered dynamically as vertical bars -->
+            </div>
+          </div>
+
+          <!-- Activity log list -->
+          <div class="admin-chart-card">
+            <div class="chart-title-row">
+              <h3>Recent System Logs</h3>
+              <button onclick="clearActivityLogs()" style="font-size:0.75rem; color:var(--red); font-weight:600;"><i class="fa-regular fa-trash-can"></i> Clear</button>
+            </div>
+            <div class="recent-activities-list" id="admin-activity-logs">
+              <!-- Dynamic entries -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW 2: PRODUCTS CRUD LIST VIEW -->
+      <div class="admin-view-tab" id="products-view" style="display:none;">
+        <div class="admin-data-card">
+          <div class="table-controls">
+            <input type="text" id="product-table-search" class="form-control table-search" placeholder="Filter products by name or category...">
+            <button class="btn btn-secondary" onclick="openAddProductModal()" style="font-size:0.85rem; padding:8px 16px;">Create Product <i class="fa-solid fa-plus"></i></button>
+          </div>
+          
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Price (INR)</th>
+                  <th>Stock Level</th>
+                  <th>Rating</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="product-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: ORDERS LOG VIEW -->
+      <div class="admin-view-tab" id="orders-view" style="display:none;">
+        <div class="admin-data-card">
+          <div class="table-controls" style="justify-content:flex-start;">
+            <input type="text" id="order-table-search" class="form-control table-search" placeholder="Search orders by customer or ID...">
+          </div>
+          
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer Name</th>
+                  <th>Date & Time</th>
+                  <th>Amount</th>
+                  <th>Payment Type</th>
+                  <th>Order Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="order-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: COUPONS VIEW -->
+      <div class="admin-view-tab" id="coupons-view" style="display:none;">
+        <div class="admin-charts-grid" style="grid-template-columns: 1fr 1.2fr;">
+          
+          <!-- Add Coupon Form -->
+          <div class="admin-chart-card">
+            <h3>Create Promo Coupon</h3>
+            <form id="admin-coupon-form" onsubmit="handleCreateCoupon(event)" style="margin-top:20px;">
+              <div class="form-group">
+                <label>Coupon Code</label>
+                <input type="text" id="coupon-code" class="form-control" placeholder="E.g., FESTIVE30" required style="text-transform:uppercase;">
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Type</label>
+                  <select id="coupon-type" class="form-control">
+                    <option value="percent">Percentage Discount</option>
+                    <option value="fixed">Fixed Flat Discount (INR)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Value</label>
+                  <input type="number" id="coupon-value" class="form-control" placeholder="E.g., 30" min="1" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Description Note</label>
+                <input type="text" id="coupon-desc" class="form-control" placeholder="E.g., 30% discount on orders" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">Create Coupon <i class="fa-solid fa-ticket"></i></button>
+            </form>
+          </div>
+
+          <!-- Coupons List -->
+          <div class="admin-chart-card">
+            <h3>Active Coupons</h3>
+            <div class="admin-table-wrapper" style="margin-top:20px;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>Discount Value</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="coupon-table-body">
+                  <!-- dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- PRODUCT EDIT / ADD MODAL FORM -->
+  <div class="admin-modal-overlay" id="product-modal-overlay">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 id="modal-form-title">Add New Product</h3>
+        <button class="admin-modal-close" onclick="closeProductModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body">
+        <form id="product-crud-form">
+          <input type="hidden" id="crud-id">
+          
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="crud-name">Product Name</label>
+              <input type="text" id="crud-name" class="form-control" placeholder="E.g., Pure Wild Cardamom" required>
+            </div>
+            <div class="form-group">
+              <label for="crud-category">Category</label>
+              <select id="crud-category" class="form-control">
+                <option value="Premium Spices">Premium Spices</option>
+                <option value="Herbal Teas">Herbal Teas</option>
+                <option value="Coffee Collection">Coffee Collection</option>
+                <option value="Forest Honey">Forest Honey</option>
+                <option value="Wellness Products">Wellness Products</option>
+                <option value="Coorg Specialties">Coorg Specialties</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="crud-price">Price (₹ INR)</label>
+              <input type="number" id="crud-price" class="form-control" min="1" placeholder="280" required>
+            </div>
+            <div class="form-group">
+              <label for="crud-stock">Stock Quantity</label>
+              <input type="number" id="crud-stock" class="form-control" min="0" placeholder="50" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="crud-image">Image URL (Unsplash Link)</label>
+            <input type="url" id="crud-image" class="form-control" placeholder="https://images.unsplash.com/..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="crud-desc">Long Description</label>
+            <textarea id="crud-desc" class="form-control" rows="3" placeholder="Describe the product history, aromas, harvesting..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="crud-origin">Estate Origin</label>
+            <input type="text" id="crud-origin" class="form-control" placeholder="E.g., Somwarpet Plantation, Altitude 3200 ft" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="crud-ingredients">Ingredients (comma separated)</label>
+              <input type="text" id="crud-ingredients" class="form-control" placeholder="Ingredients 1, Ingredients 2" required>
+            </div>
+            <div class="form-group">
+              <label for="crud-benefits">Health Benefits (comma separated)</label>
+              <input type="text" id="crud-benefits" class="form-control" placeholder="Benefit 1, Benefit 2" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="crud-usage">Usage Instructions</label>
+            <input type="text" id="crud-usage" class="form-control" placeholder="E.g., steep for 5 minutes, crush freshly over stews..." required>
+          </div>
+        </form>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closeProductModal()" style="padding:10px 20px;">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProductCrudForm()" style="padding:10px 20px;">Save Changes <i class="fa-solid fa-floppy-disk"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

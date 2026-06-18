@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details | Coorg Harvest Online Store</title>
+  
+  <meta name="description" content="Detailed information on Coorg Harvest pure spices, handpicked teas, coffees, and organic wellness products. Sourced directly from local farmers in Kodagu.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Injected Header -->
+  <header id="site-header"></header>
+
+  <!-- Page Header Breadcrumbs -->
+  <section class="page-header-block" style="padding: 120px 0 40px 0;">
+    <div class="container">
+      <h1 id="page-title">Product Details</h1>
+      <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <a href="shop.html">Shop Catalog</a>
+        <span>/</span>
+        <span id="breadcrumb-current">Product Details</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Detail Section -->
+  <section class="section" style="background-color: var(--cream-light); padding-top: 50px;">
+    <div class="container" id="product-detail-container">
+      
+      <!-- Populated dynamically via JS. If invalid, shows error -->
+      <div style="text-align: center; padding: 100px 0;" id="loading-placeholder">
+        <div class="spinner" style="margin: 0 auto 20px auto;"></div>
+        <p>Loading authentic product details...</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Injected Footer -->
+  <footer id="site-footer"></footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>`r`n  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    let currentProduct = null;
+    let selectedRating = 5; // Default rating for review submission
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get("id");
+      
+      if (!productId) {
+        renderError("No product selected. Please select a product from our catalog.");
+        return;
+      }
+
+      currentProduct = window.CoorgDB.getProductById(productId);
+      if (!currentProduct) {
+        renderError(`Product "${productId}" could not be found. It may have been removed or out of stock.`);
+        return;
+      }
+
+      // Update meta information
+      document.title = `${currentProduct.name} | Coorg Harvest`;
+      document.getElementById("page-title").textContent = currentProduct.name;
+      document.getElementById("breadcrumb-current").textContent = currentProduct.name;
+
+      // Render product contents
+      renderProductDetails(currentProduct);
+
+      // Initialize tab controls
+      setupTabControls();
+
+      // Initialize review stars input
+      setupStarInput();
+
+      // Load related products
+      loadRelatedProducts(currentProduct);
+    });
+
+    function renderError(message) {
+      const container = document.getElementById("product-detail-container");
+      container.innerHTML = `
+        <div style="text-align: center; padding: 60px 0; max-width: 550px; margin: 0 auto;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 3.5rem; color: var(--accent-gold); margin-bottom: 20px;"></i>
+          <h2>Oops! Product Not Found</h2>
+          <p style="margin: 15px 0 30px 0; color: var(--medium-gray);">${message}</p>
+          <a href="shop.html" class="btn btn-primary">Browse All Products</a>
+        </div>
+      `;
+    }
+
+    function renderProductDetails(p) {
+      const container = document.getElementById("product-detail-container");
+      const imagesList = p.images || [p.image];
+      
+      container.innerHTML = `
+        <div class="product-detail-wrapper">
+          <!-- Gallery -->
+          <div class="product-gallery">
+            <div class="product-gallery-main">
+              <img src="${p.image}" alt="${p.name}" id="main-product-img">
+            </div>
+            <div class="product-gallery-thumbs">
+              ${imagesList.map((img, idx) => `
+                <div class="thumb-item ${idx === 0 ? 'active' : ''}" onclick="swapGalleryImage(this, '${img}')">
+                  <img src="${img}" alt="${p.name} preview ${idx + 1}">
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- Info Column -->
+          <div class="product-info-col">
+            <div class="product-card-category" style="font-size: 0.85rem;">${p.category}</div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 12px;">${p.name}</h1>
+            
+            <div class="product-meta-row">
+              <div class="product-rating" style="font-size: 1rem; margin-bottom: 0;">
+                ${getStarHTML(p.rating)}
+                <span style="color: var(--dark-text); font-weight:600;">${p.rating}</span>
+                <span>(${p.ratingCount} Customer reviews)</span>
+              </div>
+            </div>
+
+            <div class="product-price-large">
+              ₹${p.price}
+              ${p.oldPrice ? `<span class="price-old" style="font-size:1.3rem; margin-left:10px;">₹${p.oldPrice}</span>` : ''}
+            </div>
+
+            <p class="product-desc-short">${p.description}</p>
+
+            <div class="product-actions-row">
+              <div class="quantity-control">
+                <button onclick="decrementQty()">-</button>
+                <span id="detail-qty-counter">1</span>
+                <button onclick="incrementQty()">+</button>
+              </div>
+              <button class="btn btn-primary btn-add-cart-large" onclick="addCurrentToCart()">
+                Add to Cart Basket <i class="fa-solid fa-basket-shopping"></i>
+              </button>
+            </div>
+
+            <div class="product-tags-info">
+              <span><strong>Availability:</strong> ${p.stock > 0 ? `<span style="color: var(--green-success); font-weight:600;">In Stock (${p.stock} units left)</span>` : `<span style="color: var(--red); font-weight:600;">Out of Stock</span>`}</span>
+              <span><strong>Sourced From:</strong> ${p.origin}</span>
+              <span><strong>Category:</strong> ${p.category}</span>
+              <span><strong>SKU:</strong> CH-${p.id.toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Tabs Section -->
+        <div class="tabs-container">
+          <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="tab-desc">Description</button>
+            <button class="tab-btn" data-tab="tab-ing">Ingredients</button>
+            <button class="tab-btn" data-tab="tab-benefits">Health Benefits</button>
+            <button class="tab-btn" data-tab="tab-usage">Usage Instructions</button>
+          </div>
+
+          <div class="tab-pane active" id="tab-desc">
+            <h3>Product Overview</h3>
+            <p>${p.description}</p>
+            <p style="margin-top: 15px;">Harvested and packed in Gonikopal, Coorg. We guarantee that this product contains no artificial preservatives, additives, or synthetic flavorings, ensuring pure organic botanical taste straight from the Western Ghats.</p>
+          </div>
+          
+          <div class="tab-pane" id="tab-ing">
+            <h3>Ingredients List</h3>
+            <ul>
+              ${p.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="tab-pane" id="tab-benefits">
+            <h3>Therapeutic & Health Benefits</h3>
+            <ul>
+              ${p.benefits.map(b => `<li>${b}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="tab-pane" id="tab-usage">
+            <h3>Recommended Application & Preparation</h3>
+            <p>${p.usage}</p>
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="section" style="padding-top: 0; background-color: transparent;">
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">Customer Reviews & Ratings</h2>
+          
+          <div class="reviews-summary">
+            <div class="rating-big-box">
+              <div class="rating-big-num">${p.rating.toFixed(1)}</div>
+              <div class="rating-big-stars">${getStarHTML(p.rating)}</div>
+              <p style="font-size:0.85rem; color:var(--medium-gray);">Based on ${p.ratingCount} reviews</p>
+            </div>
+            <div>
+              <h4 style="font-family:var(--font-sans); color: var(--primary-green); font-weight:600; margin-bottom: 10px;">100% Customer Satisfaction Guaranteed</h4>
+              <p style="font-size:0.95rem; color:#4A4A4A;">Every review comes from verified purchasers. We strive to support local agriculture and deliver premium-grade produce to families across India.</p>
+            </div>
+          </div>
+
+          <div class="reviews-list-container" id="reviews-list-container">
+            ${renderReviewList(p.reviews)}
+          </div>
+
+          <!-- Leave Review Form -->
+          <div class="review-form-box">
+            <h3>Write a Review</h3>
+            <form id="review-submission-form" onsubmit="handleReviewSubmit(event)">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="review-author">Full Name</label>
+                  <input type="text" id="review-author" class="form-control" placeholder="E.g., Devika Chengappa" required>
+                </div>
+                <div class="form-group">
+                  <label>Your Rating</label>
+                  <div class="star-rating-input" id="star-rating-input">
+                    <i class="fa-solid fa-star active" data-value="1"></i>
+                    <i class="fa-solid fa-star active" data-value="2"></i>
+                    <i class="fa-solid fa-star active" data-value="3"></i>
+                    <i class="fa-solid fa-star active" data-value="4"></i>
+                    <i class="fa-solid fa-star active" data-value="5"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="review-text">Review Comments</label>
+                <textarea id="review-text" class="form-control" rows="5" placeholder="Share your experience with this product (taste, aroma, quality)..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Submit Review <i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Related Products Section -->
+        <div class="section" style="padding-bottom: 0; background-color: transparent;">
+          <h2 style="font-size: 2rem; margin-bottom: 30px; text-align: center;">Related Products</h2>
+          <div class="product-grid" id="related-products-grid"></div>
+        </div>
+      `;
+    }
+
+    // Dynamic Swapping of images
+    window.swapGalleryImage = function(thumbElement, imgUrl) {
+      document.getElementById("main-product-img").src = imgUrl;
+      document.querySelectorAll(".thumb-item").forEach(el => el.classList.remove("active"));
+      thumbElement.classList.add("active");
+    };
+
+    // Quantity selector buttons
+    window.incrementQty = function() {
+      const counter = document.getElementById("detail-qty-counter");
+      let qty = parseInt(counter.textContent);
+      if (qty < currentProduct.stock) {
+        counter.textContent = qty + 1;
+      } else {
+        alert(`Sorry, only ${currentProduct.stock} units are currently available in our hub.`);
+      }
+    };
+
+    window.decrementQty = function() {
+      const counter = document.getElementById("detail-qty-counter");
+      let qty = parseInt(counter.textContent);
+      if (qty > 1) {
+        counter.textContent = qty - 1;
+      }
+    };
+
+    window.addCurrentToCart = function() {
+      const qty = parseInt(document.getElementById("detail-qty-counter").textContent);
+      window.CoorgDB.addToCart(currentProduct.id, qty);
+      window.openCartDrawer();
+    };
+
+    // Tabs control binding
+    function setupTabControls() {
+      const tabs = document.querySelectorAll(".tab-btn");
+      const panes = document.querySelectorAll(".tab-pane");
+
+      tabs.forEach(tab => {
+        tab.addEventListener("click", function() {
+          const target = this.getAttribute("data-tab");
+          
+          tabs.forEach(t => t.classList.remove("active"));
+          panes.forEach(p => p.classList.remove("active"));
+
+          this.classList.add("active");
+          document.getElementById(target).classList.add("active");
+        });
+      });
+    }
+
+    // Reviews list generating HTML
+    function renderReviewList(reviews) {
+      if (!reviews || reviews.length === 0) {
+        return `<p style="padding: 20px; text-align: center; color: var(--medium-gray);">No reviews yet. Be the first to review this product!</p>`;
+      }
+
+      return reviews.map(r => `
+        <div class="review-item">
+          <div class="review-header">
+            <span class="reviewer-name">${r.name}</span>
+            <span class="review-date">${r.date}</span>
+          </div>
+          <div class="review-stars">
+            ${getStarHTML(r.rating)}
+          </div>
+          <p class="review-content">${r.content}</p>
+        </div>
+      `).join('');
+    }
+
+    // Setup stars click interactions in form
+    function setupStarInput() {
+      const stars = document.querySelectorAll("#star-rating-input i");
+      stars.forEach(star => {
+        star.addEventListener("click", function() {
+          const val = parseInt(this.getAttribute("data-value"));
+          selectedRating = val;
+          
+          stars.forEach(s => {
+            const sVal = parseInt(s.getAttribute("data-value"));
+            s.classList.toggle("active", sVal <= val);
+          });
+        });
+      });
+    }
+
+    // Submit review form logic
+    window.handleReviewSubmit = function(e) {
+      e.preventDefault();
+      
+      const author = document.getElementById("review-author").value.trim();
+      const text = document.getElementById("review-text").value.trim();
+      
+      if (!author || !text) return;
+
+      const dateStr = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+      
+      const newReview = {
+        name: author,
+        rating: selectedRating,
+        date: dateStr,
+        content: text
+      };
+
+      // Push review & update product in DB
+      const products = window.CoorgDB.getProducts();
+      const dbProd = products.find(p => p.id === currentProduct.id);
+      
+      if (dbProd) {
+        if (!dbProd.reviews) dbProd.reviews = [];
+        dbProd.reviews.push(newReview);
+        
+        // Recompute rating & count
+        const totalRating = dbProd.reviews.reduce((sum, r) => sum + r.rating, 0);
+        dbProd.rating = parseFloat((totalRating / dbProd.reviews.length).toFixed(1));
+        dbProd.ratingCount = dbProd.reviews.length;
+        
+        // Save
+        window.CoorgDB.updateProduct(dbProd);
+        currentProduct = dbProd; // update local context
+
+        // Refresh UI
+        document.getElementById("reviews-list-container").innerHTML = renderReviewList(currentProduct.reviews);
+        
+        // Update average rating numbers in summary
+        document.querySelector(".rating-big-num").textContent = currentProduct.rating.toFixed(1);
+        document.querySelector(".rating-big-stars").innerHTML = getStarHTML(currentProduct.rating);
+        document.querySelector(".rating-big-box p").textContent = `Based on ${currentProduct.ratingCount} reviews`;
+        
+        // Refresh product header review counts
+        document.querySelector(".product-rating").innerHTML = `
+          ${getStarHTML(currentProduct.rating)}
+          <span style="color: var(--dark-text); font-weight:600;">${currentProduct.rating}</span>
+          <span>(${currentProduct.ratingCount} Customer reviews)</span>
+        `;
+
+        // Reset form
+        document.getElementById("review-submission-form").reset();
+        selectedRating = 5;
+        document.querySelectorAll("#star-rating-input i").forEach(s => s.classList.add("active"));
+        
+        alert("Thank you! Your organic product review was saved successfully.");
+      }
+    };
+
+    // Related products load
+    function loadRelatedProducts(p) {
+      const relatedGrid = document.getElementById("related-products-grid");
+      if (!relatedGrid) return;
+
+      const products = window.CoorgDB.getProducts();
+      // Filter products of same category, excluding active product
+      const related = products
+        .filter(item => item.category === p.category && item.id !== p.id)
+        .slice(0, 4);
+
+      if (related.length === 0) {
+        relatedGrid.parentElement.style.display = "none";
+        return;
+      }
+
+      relatedGrid.innerHTML = related.map(item => `
+        <div class="product-card">
+          <div class="product-card-img-wrapper">
+            <a href="product.html?id=${item.id}">
+              <img src="${item.image}" alt="${item.name}" class="product-card-img">
+            </a>
+            ${item.badge ? `<span class="badge-tag">${item.badge}</span>` : ''}
+          </div>
+          <div class="product-card-body">
+            <div class="product-card-category">${item.category}</div>
+            <h3 class="product-card-title"><a href="product.html?id=${item.id}">${item.name}</a></h3>
+            <div class="product-rating">
+              ${getStarHTML(item.rating)}
+              <span>(${item.ratingCount})</span>
+            </div>
+            <div class="product-card-price-row">
+              <div class="price">₹${item.price}</div>
+              <button class="btn-add-cart" onclick="window.CoorgDB.addToCart('${item.id}'); window.openCartDrawer();" title="Add to Basket">
+                <i class="fa-solid fa-basket-shopping"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Helper: generate star ratings HTML
+    function getStarHTML(rating) {
+      let stars = "";
+      const fullStars = Math.floor(rating);
+      const halfStar = rating % 1 >= 0.5;
+      
+      for (let i = 1; i <= 5; i++) {
+        if (i <= fullStars) {
+          stars += '<i class="fa-solid fa-star"></i>';
+        } else if (i === fullStars + 1 && halfStar) {
+          stars += '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+          stars += '<i class="fa-regular fa-star"></i>';
+        }
+      }
+      return stars;
+    }
+  </script>
+</body>
+</html>
