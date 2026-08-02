@@ -159,7 +159,24 @@
   <script src="js/app.js"></script>
   
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", async function() {
+      // Initialize database connection
+      await window.CoorgDB.init();
+
+      // Render Category filters dynamically
+      const filterList = document.getElementById("category-filter-list");
+      if (filterList) {
+        const categories = window.CoorgDB.getCategories();
+        filterList.innerHTML = categories.map(cat => `
+          <li>
+            <label>
+              <input type="checkbox" value="${cat.name}" class="cat-checkbox">
+              <span>${cat.name}</span>
+            </label>
+          </li>
+        `).join('');
+      }
+
       // 1. Initial configuration
       const products = window.CoorgDB.getProducts();
       

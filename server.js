@@ -436,9 +436,33 @@ async function createTables() {
       time VARCHAR(100)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id VARCHAR(255) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
 }
 
 async function seedDatabase() {
+  // Seed Categories
+  const [cats] = await db.query('SELECT COUNT(*) as count FROM categories');
+  if (cats[0].count === 0) {
+    console.log('🌱 Seeding default categories...');
+    const seedCategories = [
+      { id: "premium-spices", name: "Premium Spices" },
+      { id: "herbal-teas", name: "Herbal Teas" },
+      { id: "coffee-collection", name: "Coffee Collection" },
+      { id: "forest-honey", name: "Forest Honey" },
+      { id: "wellness-products", name: "Wellness Products" },
+      { id: "coorg-specialties", name: "Coorg Specialties" }
+    ];
+    for (const c of seedCategories) {
+      await db.query('INSERT INTO categories (id, name) VALUES (?, ?)', [c.id, c.name]);
+    }
+  }
+
   // Seed Products
   const [prods] = await db.query('SELECT COUNT(*) as count FROM products');
   if (prods[0].count === 0) {
@@ -512,6 +536,7 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
     const [couponsRows] = await db.query('SELECT * FROM coupons');
     const [ordersRows] = await db.query('SELECT * FROM orders');
     const [logsRows] = await db.query('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 50');
+    const [categoriesRows] = await db.query('SELECT * FROM categories');
 
     // Parse JSON columns back to arrays/objects
     const products = productsRows.map(p => ({
@@ -539,7 +564,7 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
       items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
     }));
 
-    res.json({ products, coupons, orders, logs: logsRows });
+    res.json({ products, coupons, orders, logs: logsRows, categories: categoriesRows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -612,6 +637,75 @@ app.delete('/api/coupons/:code', checkDB, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.5. CATEGORIES ENDPOINTS
+app.post('/api/categories', checkDB, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    const id = name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+    await db.query('INSERT INTO categories (id, name) VALUES (?, ?)', [id, name]);
+    res.json({ success: true, category: { id, name } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/categories/:id', checkDB, async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    // Get old category name to update products
+    const [oldCat] = await connection.query('SELECT name FROM categories WHERE id = ?', [id]);
+    if (oldCat.length > 0) {
+      const oldName = oldCat[0].name;
+      // Update products in this category
+      await connection.query('UPDATE products SET category = ? WHERE category = ?', [name, oldName]);
+    }
+
+    // Update category
+    await connection.query('UPDATE categories SET name = ? WHERE id = ?', [name, id]);
+
+    await connection.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.delete('/api/categories/:id', checkDB, async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { id } = req.params;
+
+    // Get category name
+    const [cat] = await connection.query('SELECT name FROM categories WHERE id = ?', [id]);
+    if (cat.length > 0) {
+      const catName = cat[0].name;
+      // Set products to Uncategorized
+      await connection.query('UPDATE products SET category = "Uncategorized" WHERE category = ?', [catName]);
+    }
+
+    // Delete category
+    await connection.query('DELETE FROM categories WHERE id = ?', [id]);
+
+    await connection.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
   }
 });
 

@@ -5,7 +5,8 @@
     products: [],
     coupons: [],
     orders: [],
-    logs: []
+    logs: [],
+    categories: []
   };
 
   let initPromise = null;
@@ -24,12 +25,14 @@
             cache.coupons = data.coupons || [];
             cache.orders = data.orders || [];
             cache.logs = data.logs || [];
+            cache.categories = data.categories || [];
             
             // Sync fallback storage
             localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
             localStorage.setItem("coorg_harvest_coupons", JSON.stringify(cache.coupons));
             localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
             localStorage.setItem("coorg_harvest_activity_logs", JSON.stringify(cache.logs));
+            localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
             
             console.log("🌿 CoorgDB: Sync with Hostinger MySQL Database completed successfully.");
           })
@@ -40,6 +43,14 @@
             cache.coupons = JSON.parse(localStorage.getItem("coorg_harvest_coupons")) || [];
             cache.orders = JSON.parse(localStorage.getItem("coorg_harvest_orders")) || [];
             cache.logs = JSON.parse(localStorage.getItem("coorg_harvest_activity_logs")) || [];
+            cache.categories = JSON.parse(localStorage.getItem("coorg_harvest_categories")) || [
+              { id: "premium-spices", name: "Premium Spices" },
+              { id: "herbal-teas", name: "Herbal Teas" },
+              { id: "coffee-collection", name: "Coffee Collection" },
+              { id: "forest-honey", name: "Forest Honey" },
+              { id: "wellness-products", name: "Wellness Products" },
+              { id: "coorg-specialties", name: "Coorg Specialties" }
+            ];
           });
       }
       return initPromise;
@@ -267,6 +278,83 @@
         });
       } catch (err) {
         console.error("Error logging activity to server database:", err);
+      }
+    },
+
+    // 7. CATEGORIES CRUD
+    getCategories: function() {
+      return cache.categories;
+    },
+    addCategory: async function(categoryName) {
+      const id = categoryName.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+      const newCat = { id, name: categoryName };
+      cache.categories.push(newCat);
+      localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
+      await this.logActivity(`Created product category: ${categoryName}`);
+
+      try {
+        await fetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: categoryName })
+        });
+      } catch (err) {
+        console.error("Error creating category on server database:", err);
+      }
+    },
+    updateCategory: async function(id, newName) {
+      // Find old name to rename products in local cache
+      const cat = cache.categories.find(c => c.id === id);
+      if (cat) {
+        const oldName = cat.name;
+        // Cascade to cache products
+        cache.products = cache.products.map(p => {
+          if (p.category === oldName) {
+            p.category = newName;
+          }
+          return p;
+        });
+        localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+        
+        cat.name = newName;
+        localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
+        await this.logActivity(`Renamed category: ${oldName} to ${newName}`);
+      }
+
+      try {
+        await fetch(`/api/categories/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+      } catch (err) {
+        console.error("Error updating category on server database:", err);
+      }
+    },
+    deleteCategory: async function(id) {
+      const cat = cache.categories.find(c => c.id === id);
+      if (cat) {
+        const catName = cat.name;
+        // Cascade: change products in this category to Uncategorized
+        cache.products = cache.products.map(p => {
+          if (p.category === catName) {
+            p.category = "Uncategorized";
+          }
+          return p;
+        });
+        localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+
+        cache.categories = cache.categories.filter(c => c.id !== id);
+        localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
+        await this.logActivity(`Deleted category: ${catName}`);
+      }
+
+      try {
+        await fetch(`/api/categories/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error("Error deleting category from server database:", err);
       }
     }
   };

@@ -44,6 +44,9 @@
         <a href="#" class="admin-menu-item" data-view="products-view">
           <i class="fa-solid fa-boxes-stacked"></i> Products CRUD
         </a>
+        <a href="#" class="admin-menu-item" data-view="categories-view">
+          <i class="fa-solid fa-folder-tree"></i> Categories CRUD
+        </a>
         <a href="#" class="admin-menu-item" data-view="orders-view">
           <i class="fa-solid fa-file-invoice-dollar"></i> Orders Log
         </a>
@@ -252,6 +255,46 @@
         </div>
       </div>
 
+      <!-- VIEW 5: CATEGORIES CRUD LIST VIEW -->
+      <div class="admin-view-tab" id="categories-view" style="display:none;">
+        <div class="admin-charts-grid" style="grid-template-columns: 1fr 1.2fr;">
+          
+          <!-- Add/Edit Category Form -->
+          <div class="admin-chart-card">
+            <h3 id="category-form-title">Create New Category</h3>
+            <form id="admin-category-form" onsubmit="handleSaveCategory(event)" style="margin-top:20px;">
+              <input type="hidden" id="category-id">
+              <div class="form-group">
+                <label for="category-name">Category Name</label>
+                <input type="text" id="category-name" class="form-control" placeholder="E.g., Spices, Teas, Pickles" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;" id="btn-save-category">Create Category <i class="fa-solid fa-folder-plus"></i></button>
+              <button type="button" class="btn btn-secondary" style="width:100%; margin-top:10px; display:none;" id="btn-cancel-edit-category" onclick="cancelCategoryEdit()">Cancel Edit</button>
+            </form>
+          </div>
+
+          <!-- Categories Table List -->
+          <div class="admin-chart-card">
+            <h3>Active Categories</h3>
+            <div class="admin-table-wrapper" style="margin-top:20px;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="category-table-body">
+                  <!-- dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -275,12 +318,7 @@
             <div class="form-group">
               <label for="crud-category">Category</label>
               <select id="crud-category" class="form-control">
-                <option value="Premium Spices">Premium Spices</option>
-                <option value="Herbal Teas">Herbal Teas</option>
-                <option value="Coffee Collection">Coffee Collection</option>
-                <option value="Forest Honey">Forest Honey</option>
-                <option value="Wellness Products">Wellness Products</option>
-                <option value="Coorg Specialties">Coorg Specialties</option>
+                <!-- Populated dynamically -->
               </select>
             </div>
           </div>

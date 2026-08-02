@@ -112,7 +112,8 @@
   <script>
     let activeOrder = null;
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", async function() {
+      await window.CoorgDB.init();
       const urlParams = new URLSearchParams(window.location.search);
       const orderId = urlParams.get("id");
 

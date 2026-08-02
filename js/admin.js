@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   renderOrdersTable();
   renderCouponsTable();
   renderActivityLogsList();
+  renderCategoriesTable();
 
   // 6. Search Listeners
   setupSearches();
@@ -244,6 +245,7 @@ function renderProductsTable(filterText = "") {
 
 // CRUD Modal Form interactions
 window.openAddProductModal = function() {
+  populateCategoryDropdown();
   document.getElementById("modal-form-title").textContent = "Add New Product";
   document.getElementById("product-crud-form").reset();
   document.getElementById("crud-id").value = "";
@@ -256,6 +258,7 @@ window.openAddProductModal = function() {
 };
 
 window.openEditProductModal = function(id) {
+  populateCategoryDropdown();
   const p = window.CoorgDB.getProductById(id);
   if (!p) return;
 
@@ -736,3 +739,89 @@ function resetUploadStatus() {
   const fileInput = document.getElementById("crud-image-file");
   if (fileInput) fileInput.value = "";
 }
+
+// DYNAMIC CATEGORY DROPDOWN POPULATION FOR PRODUCT MODAL
+function populateCategoryDropdown() {
+  const select = document.getElementById("crud-category");
+  if (!select) return;
+  const categories = window.CoorgDB.getCategories();
+  select.innerHTML = categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+// CATEGORIES CRUD CONTROLLER FUNCTIONS
+window.renderCategoriesTable = function() {
+  const tbody = document.getElementById("category-table-body");
+  if (!tbody) return;
+
+  const categories = window.CoorgDB.getCategories();
+  if (categories.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--medium-gray);">No categories found. Create one.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = categories.map(c => `
+    <tr>
+      <td><code>${c.id}</code></td>
+      <td><strong>${c.name}</strong></td>
+      <td>
+        <div class="action-btns">
+          <button class="action-btn edit" onclick="editCategoryHandler('${c.id}')" title="Edit Category Name"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="action-btn delete" onclick="deleteCategoryHandler('${c.id}')" title="Delete Category"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+};
+
+window.handleSaveCategory = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById("category-id").value;
+  const name = document.getElementById("category-name").value.trim();
+
+  if (!name) return;
+
+  if (id) {
+    // Edit existing category
+    await window.CoorgDB.updateCategory(id, name);
+  } else {
+    // Add new category
+    await window.CoorgDB.addCategory(name);
+  }
+
+  // Reset form and UI
+  cancelCategoryEdit();
+  renderCategoriesTable();
+  renderProductsTable();
+  loadAnalytics(); // Refresh item count metrics
+};
+
+window.editCategoryHandler = function(id) {
+  const cat = window.CoorgDB.getCategories().find(c => c.id === id);
+  if (!cat) return;
+
+  document.getElementById("category-id").value = cat.id;
+  document.getElementById("category-name").value = cat.name;
+  document.getElementById("category-form-title").textContent = "Edit Category Name";
+  document.getElementById("btn-save-category").innerHTML = `Update Category <i class="fa-solid fa-floppy-disk"></i>`;
+  document.getElementById("btn-cancel-edit-category").style.display = "block";
+};
+
+window.deleteCategoryHandler = async function(id) {
+  const cat = window.CoorgDB.getCategories().find(c => c.id === id);
+  if (!cat) return;
+
+  if (confirm(`Are you sure you want to delete category "${cat.name}"?\nAll products in this category will be changed to "Uncategorized".`)) {
+    await window.CoorgDB.deleteCategory(id);
+    renderCategoriesTable();
+    renderProductsTable();
+    loadAnalytics();
+  }
+};
+
+window.cancelCategoryEdit = function() {
+  document.getElementById("admin-category-form").reset();
+  document.getElementById("category-id").value = "";
+  document.getElementById("category-form-title").textContent = "Create New Category";
+  document.getElementById("btn-save-category").innerHTML = `Create Category <i class="fa-solid fa-folder-plus"></i>`;
+  document.getElementById("btn-cancel-edit-category").style.display = "none";
+};
