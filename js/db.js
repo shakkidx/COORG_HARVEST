@@ -39,7 +39,20 @@
           .catch(err => {
             console.warn("⚠️ CoorgDB: Sync failed. Falling back to LocalStorage.", err.message);
             // Load from LocalStorage fallback or default seed
-            cache.products = JSON.parse(localStorage.getItem("coorg_harvest_products")) || getFallbackProducts();
+            let localProducts = null;
+            try {
+              localProducts = JSON.parse(localStorage.getItem("coorg_harvest_products"));
+            } catch (e) {}
+
+            // If local products contain old spices or cardamom, force reset the cache
+            if (localProducts && localProducts.some(p => p.id === 'spices-black-pepper')) {
+              console.log("🧹 CoorgDB: Legacy products detected in browser cache. Purging cache...");
+              localProducts = null;
+              localStorage.removeItem("coorg_harvest_products");
+              localStorage.removeItem("coorg_harvest_categories");
+            }
+
+            cache.products = localProducts || getFallbackProducts();
             cache.coupons = JSON.parse(localStorage.getItem("coorg_harvest_coupons")) || [
               { code: "COORG20", type: "percent", value: 20, description: "20% off on your entire order!" },
               { code: "FREESHIP", type: "fixed", value: 50, description: "Flat ₹50 discount (equivalent to shipping fee)." },
@@ -48,8 +61,8 @@
             cache.orders = JSON.parse(localStorage.getItem("coorg_harvest_orders")) || [];
             cache.logs = JSON.parse(localStorage.getItem("coorg_harvest_activity_logs")) || [];
             cache.categories = JSON.parse(localStorage.getItem("coorg_harvest_categories")) || [
-              { id: "premium-spices", name: "Premium Spices" },
-              { id: "herbal-teas", name: "Herbal Teas" },
+              { id: "coorg-spices", name: "Coorg Spices" },
+              { id: "tea-collection", name: "Tea Collection" },
               { id: "coffee-collection", name: "Coffee Collection" },
               { id: "forest-honey", name: "Forest Honey" },
               { id: "wellness-products", name: "Wellness Products" },
