@@ -152,6 +152,10 @@ function setupTabSwitches() {
         viewTitle.textContent = "Discount Coupons Control";
         headerBtn.style.display = "none";
         renderCouponsTable();
+      } else if (targetView === "categories-view") {
+        viewTitle.textContent = "Product Categories CRUD";
+        headerBtn.style.display = "none";
+        renderCategoriesTable();
       }
     });
   });

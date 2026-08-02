@@ -424,9 +424,69 @@
   <script src="js/app.js"></script>
   
   <script>
-    // Load dynamic best sellers
+    // Load dynamic page contents (categories & best sellers)
     document.addEventListener("DOMContentLoaded", async function() {
       await window.CoorgDB.init();
+
+      // 1. Render dynamic categories on homepage
+      const categoriesContainer = document.querySelector(".categories-grid");
+      if (categoriesContainer) {
+        const categories = window.CoorgDB.getCategories();
+        
+        const defaultCategoryData = {
+          "premium-spices": {
+            image: "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=500&q=80",
+            desc: "Black pepper, bold cardamoms, and wild chili peppers.",
+            btnText: "Browse Spices"
+          },
+          "herbal-teas": {
+            image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=500&q=80",
+            desc: "Sun-dried hibiscus, green teas, and botanical infusions.",
+            btnText: "Browse Teas"
+          },
+          "coffee-collection": {
+            image: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=500&q=80",
+            desc: "Shade-grown roasted Arabica, Robusta and signature house blends.",
+            btnText: "Browse Coffee"
+          },
+          "forest-honey": {
+            image: "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=500&q=80",
+            desc: "100% raw, unfiltered honey collected from deep forest hives.",
+            btnText: "Browse Honey"
+          },
+          "wellness-products": {
+            image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=500&q=80",
+            desc: "Pure Kasturi turmeric powders, herbal health roots, and scrubs.",
+            btnText: "Browse Wellness"
+          },
+          "coorg-specialties": {
+            image: "https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=500&q=80",
+            desc: "Traditional pickles, bamboo shoot reserves, and local preserves.",
+            btnText: "Browse Specialties"
+          }
+        };
+
+        categoriesContainer.innerHTML = categories.map(cat => {
+          const defaults = defaultCategoryData[cat.id] || {
+            image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=500&q=80",
+            desc: "Explore our premium shade-grown organic products.",
+            btnText: "Browse Catalog"
+          };
+
+          return `
+            <a href="shop.html?category=${encodeURIComponent(cat.name)}" class="category-card">
+              <img src="${defaults.image}" alt="${cat.name}" class="category-img">
+              <div class="category-overlay">
+                <h3>${cat.name}</h3>
+                <p>${defaults.desc}</p>
+                <div class="btn-cat">${defaults.btnText} <i class="fa-solid fa-arrow-right"></i></div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+
+      // 2. Render best sellers
       const bestSellers = window.CoorgDB.getProducts().slice(0, 4); // Fetch first 4
       const container = document.getElementById("bestsellers-container");
       
