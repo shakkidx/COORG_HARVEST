@@ -466,8 +466,8 @@
       }, 1000);
     };
 
-    // Finish placing order in localStorage database
-    function completeOrder(paymentStatus) {
+    // Finish placing order in MySQL database
+    async function completeOrder(paymentStatus) {
       const billing = JSON.parse(sessionStorage.getItem("coorg_temp_billing"));
       const cart = window.CoorgDB.getCart();
 
@@ -493,7 +493,7 @@
       };
 
       // Place order in DB (clears cart, updates stocks, logs activity)
-      window.CoorgDB.placeOrder(newOrder);
+      await window.CoorgDB.placeOrder(newOrder);
 
       // Redirect to success
       window.location.href = `order-success.html?id=${orderId}`;

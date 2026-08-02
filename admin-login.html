@@ -286,7 +286,7 @@
     }
 
     // View B - OTP verification
-    function handleOtpSubmit(e) {
+    async function handleOtpSubmit(e) {
       e.preventDefault();
       
       const otpInput = document.getElementById("login-otp").value.trim();
@@ -298,19 +298,19 @@
         sessionStorage.setItem("coorg_admin_username", expectedUsername);
 
         // Audit Trail successful login in DB
-        window.CoorgDB.logActivity(`Audit log: Super Admin '${expectedUsername}' logged in successfully (IP: 192.168.1.101).`);
+        await window.CoorgDB.logActivity(`Audit log: Super Admin '${expectedUsername}' logged in successfully (IP: 192.168.1.101).`);
 
         // Redirect
         window.location.replace("admin.html");
       } else {
         otpError.textContent = "Invalid OTP code verification token. Try again.";
         otpError.style.display = "block";
-        window.CoorgDB.logActivity(`Audit alert: Failed 2FA verification attempt for user '${expectedUsername}'.`);
+        await window.CoorgDB.logActivity(`Audit alert: Failed 2FA verification attempt for user '${expectedUsername}'.`);
       }
     }
 
     // Handles locking out
-    function handleFailedAttempt(message) {
+    async function handleFailedAttempt(message) {
       const errorMsg = document.getElementById("login-error-msg");
       errorMsg.textContent = message;
       errorMsg.style.display = "block";
@@ -320,7 +320,7 @@
       localStorage.setItem("coorg_failed_attempts", attempts);
 
       // Audit log failed login
-      window.CoorgDB.logActivity(`Security Alert: Failed administrator login attempt (Attempt ${attempts}/5).`);
+      await window.CoorgDB.logActivity(`Security Alert: Failed administrator login attempt (Attempt ${attempts}/5).`);
 
       if (attempts >= 5) {
         const lockDuration = 5 * 60 * 1000; // 5 minutes
@@ -328,7 +328,7 @@
         localStorage.setItem("coorg_lockout_until", lockTime);
         localStorage.removeItem("coorg_failed_attempts");
         
-        window.CoorgDB.logActivity("Security Alert: Excessive failed logins. Login interface locked for 5 minutes.");
+        await window.CoorgDB.logActivity("Security Alert: Excessive failed logins. Login interface locked for 5 minutes.");
         checkLockoutState();
       }
     }

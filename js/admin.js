@@ -1,7 +1,7 @@
 // ADMIN DASHBOARD CONTROLLER - COORG HARVEST
-document.addEventListener("DOMContentLoaded", function() {
-  // 1. Initial Seeding of Orders if Empty
-  seedMockOrders();
+document.addEventListener("DOMContentLoaded", async function() {
+  // Initialize and sync database from server
+  await window.CoorgDB.init();
 
   // 2. Set Active Date
   document.getElementById("admin-date-string").textContent = new Date().toLocaleDateString(undefined, {
@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // 8. Inactivity Watcher (30 minutes)
   setupInactivityTimeout();
+
+  // 9. Setup Product Image Upload Listener
+  setupImageUploadListener();
 });
 
 // Seed mock orders and logs to make the dashboard look populated and premium out-of-the-box
@@ -248,6 +251,7 @@ window.openAddProductModal = function() {
   // Set default placeholder nature image
   document.getElementById("crud-image").value = "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=600&q=80";
 
+  resetUploadStatus();
   document.getElementById("product-modal-overlay").classList.add("active");
 };
 
@@ -268,14 +272,16 @@ window.openEditProductModal = function(id) {
   document.getElementById("crud-benefits").value = p.benefits.join(", ");
   document.getElementById("crud-usage").value = p.usage;
 
+  resetUploadStatus();
   document.getElementById("product-modal-overlay").classList.add("active");
 };
 
 window.closeProductModal = function() {
+  resetUploadStatus();
   document.getElementById("product-modal-overlay").classList.remove("active");
 };
 
-window.saveProductCrudForm = function() {
+window.saveProductCrudForm = async function() {
   const form = document.getElementById("product-crud-form");
   if (!form.reportValidity()) return;
 
@@ -298,7 +304,7 @@ window.saveProductCrudForm = function() {
       ...oldProduct,
       name, category, price, stock, image, description, origin, ingredients, benefits, usage
     };
-    window.CoorgDB.updateProduct(updated);
+    await window.CoorgDB.updateProduct(updated);
   } else {
     // New Product Mode
     const newId = category.toLowerCase().replace(/ /g, "-") + "-" + name.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "");
@@ -310,7 +316,7 @@ window.saveProductCrudForm = function() {
       badge: "New Sourcing",
       reviews: []
     };
-    window.CoorgDB.addProduct(newProduct);
+    await window.CoorgDB.addProduct(newProduct);
   }
 
   closeProductModal();
@@ -318,9 +324,9 @@ window.saveProductCrudForm = function() {
   loadAnalytics(); // update metrics count
 };
 
-window.deleteProductHandler = function(id) {
+window.deleteProductHandler = async function(id) {
   if (confirm("Are you sure you want to permanently delete this product from the catalog?")) {
-    window.CoorgDB.deleteProduct(id);
+    await window.CoorgDB.deleteProduct(id);
     renderProductsTable();
     loadAnalytics();
   }
@@ -375,8 +381,8 @@ function renderOrdersTable(filterText = "") {
   `).join('');
 }
 
-window.changeOrderStatusHandler = function(orderId, newStatus) {
-  window.CoorgDB.updateOrderStatus(orderId, newStatus);
+window.changeOrderStatusHandler = async function(orderId, newStatus) {
+  await window.CoorgDB.updateOrderStatus(orderId, newStatus);
   renderOrdersTable();
   renderActivityLogsList();
 };
@@ -556,7 +562,7 @@ function renderCouponsTable() {
   `).join('');
 }
 
-window.handleCreateCoupon = function(e) {
+window.handleCreateCoupon = async function(e) {
   e.preventDefault();
   
   const code = document.getElementById("coupon-code").value.trim().toUpperCase();
@@ -567,15 +573,15 @@ window.handleCreateCoupon = function(e) {
   if (!code || isNaN(value) || !description) return;
 
   const newCoupon = { code, type, value, description };
-  window.CoorgDB.addCoupon(newCoupon);
+  await window.CoorgDB.addCoupon(newCoupon);
   
   document.getElementById("admin-coupon-form").reset();
   renderCouponsTable();
 };
 
-window.deleteCouponHandler = function(code) {
+window.deleteCouponHandler = async function(code) {
   if (confirm(`Are you sure you want to delete coupon code ${code}?`)) {
-    window.CoorgDB.deleteCoupon(code);
+    await window.CoorgDB.deleteCoupon(code);
     renderCouponsTable();
   }
 };
@@ -670,4 +676,63 @@ function performLogout() {
   sessionStorage.removeItem("coorg_admin_logged_in");
   sessionStorage.removeItem("coorg_admin_username");
   window.location.replace("admin-login.html");
+}
+
+// PRODUCT IMAGE FILE UPLOAD HANDLER WITH BASE64 FALLBACK
+function setupImageUploadListener() {
+  const fileInput = document.getElementById("crud-image-file");
+  const urlInput = document.getElementById("crud-image");
+  const statusMsg = document.getElementById("upload-status-msg");
+
+  if (!fileInput || !urlInput || !statusMsg) return;
+
+  fileInput.addEventListener("change", async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show loading indicator
+    statusMsg.style.color = "var(--earth-brown || #2E5E3E)";
+    statusMsg.textContent = "⌛ Uploading file to server...";
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      urlInput.value = data.url;
+      statusMsg.style.color = "#2E5E3E"; // green
+      statusMsg.textContent = "✅ Image uploaded successfully!";
+      
+      // Log audit trail
+      await window.CoorgDB.logActivity(`Uploaded product image: ${file.name}`);
+    } catch (err) {
+      console.warn("Server uploader failed, falling back to Base64:", err.message);
+      
+      // Offline fallback: Read as Base64 Data URL
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        urlInput.value = evt.target.result;
+        statusMsg.style.color = "#C5A059"; // gold
+        statusMsg.textContent = "⚡ Saved locally as Base64 (Server offline fallback).";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+function resetUploadStatus() {
+  const statusMsg = document.getElementById("upload-status-msg");
+  if (statusMsg) {
+    statusMsg.style.color = "var(--medium-gray)";
+    statusMsg.textContent = "Provide a direct image URL or upload a local file.";
+  }
+  const fileInput = document.getElementById("crud-image-file");
+  if (fileInput) fileInput.value = "";
 }

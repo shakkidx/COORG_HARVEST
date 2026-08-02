@@ -1,5 +1,8 @@
 // GLOBAL INTERACTIONS - COORG HARVEST
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
+  // Initialize and sync database from server
+  await window.CoorgDB.init();
+
   // Inject FontAwesome CDN if not present
   if (!document.querySelector('link[href*="font-awesome"]')) {
     const fa = document.createElement('link');
