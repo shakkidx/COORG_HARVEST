@@ -380,8 +380,9 @@ function renderOrdersTable(filterText = "") {
         </select>
       </td>
       <td>
-        <div class="action-btns">
-          <button class="action-btn download" onclick="adminDownloadInvoice('${o.id}')" title="Print Invoice PDF"><i class="fa-solid fa-file-arrow-down"></i></button>
+        <div class="action-btns" style="display: flex; gap: 8px;">
+          <button class="action-btn download" style="background-color: var(--primary-green); color: white;" onclick="adminDownloadInvoice('${o.id}')" title="Download Invoice PDF"><i class="fa-solid fa-file-invoice"></i></button>
+          <button class="action-btn download" style="background-color: var(--accent-gold); color: white;" onclick="adminDownloadDeliverySlip('${o.id}')" title="Download 4x6 Delivery Label"><i class="fa-solid fa-truck-ramp-box"></i></button>
         </div>
       </td>
     </tr>
@@ -431,7 +432,7 @@ window.adminDownloadInvoice = function(id) {
   doc.setTextColor(29, 29, 29);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("DUPLICATE INVOICE", 15, 55);
+  doc.text("CUSTOMER INVOICE", 15, 55);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -520,6 +521,30 @@ window.adminDownloadInvoice = function(id) {
   doc.setTextColor(46, 94, 62);
   doc.text("Grand Total:", 125, currentY + 3);
   doc.text(`Rs. ${order.total.toFixed(2)}`, 172, currentY + 3);
+  currentY += 10;
+
+  if (order.paymentMethod.toUpperCase() === 'COD') {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(29, 29, 29);
+    doc.text("COD Deposit Paid (Online):", 125, currentY);
+    doc.text(`-Rs. 50.00`, 172, currentY);
+    currentY += 6;
+    
+    doc.line(125, currentY - 2, 195, currentY - 2);
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(180, 50, 50);
+    doc.text("Balance Due on Delivery:", 125, currentY + 3);
+    doc.text(`Rs. ${(order.total - 50).toFixed(2)}`, 172, currentY + 3);
+    currentY += 12;
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7.5);
+    doc.setTextColor(150, 50, 50);
+    doc.text("*Note: Online COD deposit of Rs. 50.00 is non-refundable.", 15, currentY - 12);
+  }
 
   // VERIFIED STAMP
   doc.setDrawColor(46, 94, 62);
@@ -540,7 +565,117 @@ window.adminDownloadInvoice = function(id) {
   doc.text("Thank you for supporting Kodagu's small farmers!", 105, 275, null, null, "center");
 
   // SAVE
-  doc.save(`Invoice_${order.id}_Dupe.pdf`);
+  doc.save(`Invoice_${order.id}.pdf`);
+};
+
+// Admin Reprinting 4x6 Delivery Label
+window.adminDownloadDeliverySlip = function(id) {
+  const order = window.CoorgDB.getOrderById(id);
+  if (!order) return;
+
+  const { jsPDF } = window.jspdf;
+  // Initialize in inches (4x6 format)
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'in',
+    format: [4, 6]
+  });
+
+  // Margins & branding
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(46, 94, 62);
+  doc.text("COORG HARVEST", 0.3, 0.4);
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 100, 100);
+  doc.text("Bypass Road, Gonikopal, Kodagu - 571213", 0.3, 0.55);
+  doc.text("Phone: +91 9880077218", 0.3, 0.7);
+
+  // Outer border box
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(0.2, 0.8, 3.6, 5.0);
+
+  // TO: Section (Recipient)
+  doc.setFillColor(245, 245, 245);
+  doc.rect(0.25, 0.9, 3.5, 1.4, "F");
+  
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(29, 29, 29);
+  doc.text("SHIP TO:", 0.35, 1.05);
+
+  doc.setFontSize(10);
+  doc.text(order.name, 0.35, 1.25);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  const splitAddr = doc.splitTextToSize(order.address, 3.3);
+  doc.text(splitAddr, 0.35, 1.45);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Phone: ${order.phone}`, 0.35, 2.15);
+
+  // Order meta info
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Order ID: ${order.id}`, 0.3, 2.5);
+  doc.text(`Date: ${order.date.split(',')[0]}`, 0.3, 2.65);
+  doc.text(`Tracking ID: ${order.trackingId}`, 0.3, 2.8);
+
+  // Cash collect display
+  let collectAmount = 0;
+  let statusText = "PAID ONLINE";
+  if (order.paymentMethod.toUpperCase() === 'COD') {
+    collectAmount = order.total - 50.00;
+    statusText = `CASH TO COLLECT: INR ${collectAmount.toFixed(2)}`;
+  }
+
+  doc.setFillColor(order.paymentMethod.toUpperCase() === 'COD' ? 245 : 230, order.paymentMethod.toUpperCase() === 'COD' ? 220 : 245, order.paymentMethod.toUpperCase() === 'COD' ? 220 : 230);
+  doc.rect(0.25, 2.95, 3.5, 0.5, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(order.paymentMethod.toUpperCase() === 'COD' ? 180 : 46, order.paymentMethod.toUpperCase() === 'COD' ? 50 : 94, order.paymentMethod.toUpperCase() === 'COD' ? 50 : 62);
+  doc.text(statusText, 0.35, 3.28);
+
+  // If COD, add deposit warning
+  if (order.paymentMethod.toUpperCase() === 'COD') {
+    doc.setFontSize(6.5);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(150, 50, 50);
+    doc.text("*Online COD Deposit of INR 50.00 paid. Do not collect full total.*", 0.35, 3.38);
+  }
+
+  // Items checklist
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(29, 29, 29);
+  doc.text("PACKING ITEMS CHECKLIST:", 0.3, 3.65);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  let itemY = 3.85;
+  order.items.forEach((item, index) => {
+    // Checkbox
+    doc.rect(0.3, itemY - 0.08, 0.1, 0.1);
+    
+    // Qty & Name
+    doc.setFont("helvetica", "bold");
+    doc.text(`[ Qty: ${item.qty} ]`, 0.5, itemY);
+    doc.setFont("helvetica", "normal");
+    doc.text(item.name.substring(0, 32), 1.2, itemY);
+    
+    itemY += 0.22;
+  });
+
+  // Footer label tag
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(150, 150, 150);
+  doc.text("Coorg Harvest Courier Label (4x6)", 2.0, 5.7, null, null, "center");
+
+  doc.save(`Label_${order.id}.pdf`);
 };
 
 

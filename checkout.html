@@ -340,8 +340,8 @@
         discountRow.style.display = "flex";
       }
 
-      const shipping = subtotal > 500 ? 0 : 50;
-      shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
+      const shipping = 40;
+      shippingEl.textContent = `₹${shipping.toFixed(2)}`;
 
       grandTotal = subtotal - discount + shipping;
       totalEl.textContent = `₹${grandTotal.toFixed(2)}`;
@@ -364,9 +364,8 @@
       cardEl.querySelector("input[type='radio']").checked = true;
 
       // Update Proceed Button text
-      const btn = document.querySelector("#checkout-form + button");
       if (method === 'cod') {
-        document.querySelector("#checkout-form button[type='submit']").innerHTML = `Place Order (Cash on Delivery) <i class="fa-solid fa-clipboard-check" style="margin-left:5px;"></i>`;
+        document.querySelector("#checkout-form button[type='submit']").innerHTML = `Pay COD Deposit & Place Order <i class="fa-solid fa-clipboard-check" style="margin-left:5px;"></i>`;
       } else {
         document.querySelector("#checkout-form button[type='submit']").innerHTML = `Proceed to Secure Payment <i class="fa-solid fa-lock" style="margin-left:5px;"></i>`;
       }
@@ -397,14 +396,8 @@
       const billingDetails = { name, phone, email, address, city, state, pin };
       sessionStorage.setItem("coorg_temp_billing", JSON.stringify(billingDetails));
 
-      // Route based on payment choice
-      if (activePaymentMethod === 'cod') {
-        // COD immediately finishes ordering
-        completeOrder("Cash on Delivery - Pending");
-      } else {
-        // Open simulated payment overlay
-        openPaymentGateway();
-      }
+      // Route based on payment choice (both open payment gateway, COD requires ₹50 deposit)
+      openPaymentGateway();
     };
 
     // Open simulated Razorpay modal
@@ -412,10 +405,59 @@
       const overlay = document.getElementById("gateway-modal-overlay");
       overlay.classList.add("active");
       
-      // Toggle views
-      document.getElementById("modal-view-upi").style.display = activePaymentMethod === 'upi' ? 'block' : 'none';
-      document.getElementById("modal-view-card").style.display = activePaymentMethod === 'card' ? 'block' : 'none';
-      document.getElementById("modal-view-netbank").style.display = activePaymentMethod === 'netbank' ? 'block' : 'none';
+      const vpa = "faizalpm2020@okicici";
+      let amountToPay = grandTotal;
+      let explanation = "";
+
+      if (activePaymentMethod === 'cod') {
+        amountToPay = 50.00;
+        explanation = `Scan to pay the non-refundable ₹50.00 COD deposit. The balance of ₹${(grandTotal - 50).toFixed(2)} is due at delivery.`;
+        // Force display UPI view for COD deposit
+        document.getElementById("modal-view-upi").style.display = 'block';
+        document.getElementById("modal-view-card").style.display = 'none';
+        document.getElementById("modal-view-netbank").style.display = 'none';
+      } else {
+        explanation = `Scan this secure QR code using GPay, PhonePe, or BHIM to pay the full amount of ₹${grandTotal.toFixed(2)}`;
+        document.getElementById("modal-view-upi").style.display = activePaymentMethod === 'upi' ? 'block' : 'none';
+        document.getElementById("modal-view-card").style.display = activePaymentMethod === 'card' ? 'block' : 'none';
+        document.getElementById("modal-view-netbank").style.display = activePaymentMethod === 'netbank' ? 'block' : 'none';
+      }
+
+      // Update gateway amount display
+      document.getElementById("gateway-amount-display").textContent = `₹${amountToPay.toFixed(2)}`;
+      
+      // Update QR Code image source dynamically
+      const qrData = encodeURIComponent(`upi://pay?pa=${vpa}&pn=Coorg%20Harvest&tn=CH-Order&am=${amountToPay}&cu=INR`);
+      const qrImg = document.querySelector("#modal-view-upi .gateway-qr-box img");
+      if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrData}`;
+      }
+
+      // Add clickable link on mobile devices
+      let upiBtn = document.getElementById("mobile-upi-link");
+      if (!upiBtn) {
+        upiBtn = document.createElement("a");
+        upiBtn.id = "mobile-upi-link";
+        upiBtn.className = "btn btn-outline";
+        upiBtn.style.display = "block";
+        upiBtn.style.textAlign = "center";
+        upiBtn.style.marginTop = "15px";
+        upiBtn.style.padding = "10px";
+        upiBtn.style.fontWeight = "600";
+        upiBtn.style.color = "var(--primary-green)";
+        upiBtn.style.border = "1px solid var(--primary-green)";
+        upiBtn.style.borderRadius = "var(--border-radius-lg)";
+        upiBtn.style.textDecoration = "none";
+        upiBtn.innerHTML = `Pay via UPI App <i class="fa-solid fa-mobile-screen-button" style="margin-left:5px;"></i>`;
+        document.getElementById("modal-view-upi").appendChild(upiBtn);
+      }
+      upiBtn.href = `upi://pay?pa=${vpa}&pn=Coorg%20Harvest&tn=CH-Order&am=${amountToPay}&cu=INR`;
+
+      // Update instruction text
+      const instr = document.querySelector("#modal-view-upi .gateway-instruction");
+      if (instr) {
+        instr.innerHTML = explanation;
+      }
 
       // Start Countdown
       startCountdownTimer();
@@ -461,7 +503,13 @@
           setTimeout(function() {
             clearInterval(timerInterval);
             document.getElementById("gateway-modal-overlay").classList.remove("active");
-            completeOrder(paymentStatus);
+            
+            // Determine order payment state
+            let finalStatus = "Paid";
+            if (activePaymentMethod === 'cod') {
+              finalStatus = "COD - ₹50 Deposit Paid";
+            }
+            completeOrder(finalStatus);
           }, 1000);
         }, 1200);
       }, 1000);
@@ -476,6 +524,10 @@
       const dateStr = new Date().toLocaleString();
       const trackingNumber = `CHTRK${Math.floor(1000000 + Math.random() * 9000000)}`;
 
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const discount = calculateDiscountAmount(cart);
+      const shipping = 40;
+
       const newOrder = {
         id: orderId,
         date: dateStr,
@@ -484,19 +536,44 @@
         email: billing.email,
         address: `${billing.address}, ${billing.city}, ${billing.state} - ${billing.pin}`,
         items: cart,
-        subtotal: cart.reduce((sum, item) => sum + (item.price * item.qty), 0),
-        discount: calculateDiscountAmount(cart),
-        shipping: cart.reduce((sum, item) => sum + (item.price * item.qty), 0) > 500 ? 0 : 50,
+        subtotal: subtotal,
+        discount: discount,
+        shipping: shipping,
         total: grandTotal,
         paymentMethod: activePaymentMethod.toUpperCase(),
-        status: paymentStatus === 'Paid' ? 'Paid' : 'Pending COD',
+        status: paymentStatus,
         trackingId: trackingNumber
       };
 
       // Place order in DB (clears cart, updates stocks, logs activity)
       await window.CoorgDB.placeOrder(newOrder);
 
-      // Redirect to success
+      // REDIRECT TO WHATSAPP API WITH INVOICE / ORDER SUMMARY
+      let itemsText = cart.map(i => `- ${i.name} x ${i.qty} (₹${(i.price * i.qty).toFixed(2)})`).join('\n');
+      let paymentText = activePaymentMethod.toUpperCase() === 'COD' 
+        ? `COD (₹50 Deposit Paid online)\n*Balance to Collect at Delivery:* ₹${(grandTotal - 50).toFixed(2)}\n*(Note: ₹50 online COD deposit is non-refundable)*`
+        : `UPI Paid (Full Amount)`;
+
+      let waMessage = `*New Order Confirmed!* 🌾\n` +
+                      `*Order ID:* ${orderId}\n` +
+                      `*Date:* ${dateStr}\n\n` +
+                      `*Customer Details:*\n` +
+                      `Name: ${billing.name}\n` +
+                      `Phone: ${billing.phone}\n` +
+                      `Address: ${newOrder.address}\n\n` +
+                      `*Items Ordered:*\n${itemsText}\n\n` +
+                      `*Summary:*\n` +
+                      `- Subtotal: ₹${subtotal.toFixed(2)}\n` +
+                      `- Discount: -₹${discount.toFixed(2)}\n` +
+                      `- Delivery Charge: ₹${shipping.toFixed(2)}\n` +
+                      `- Grand Total: ₹${grandTotal.toFixed(2)}\n\n` +
+                      `*Payment Details:*\n${paymentText}\n\n` +
+                      `Thank you for shopping with Coorg Harvest!`;
+
+      const whatsappURL = `https://api.whatsapp.com/send?phone=919880077218&text=${encodeURIComponent(waMessage)}`;
+      
+      // Open WhatsApp sharing link in new tab and go to order success
+      window.open(whatsappURL, '_blank');
       window.location.href = `order-success.html?id=${orderId}`;
     }
 
