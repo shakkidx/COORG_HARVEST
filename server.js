@@ -765,6 +765,17 @@ app.put('/api/orders/:id/status', checkDB, async (req, res) => {
   }
 });
 
+app.put('/api/orders/:id/tracking', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { trackingId } = req.body;
+    await db.query('UPDATE orders SET trackingId=? WHERE id=?', [trackingId, id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 5. ACTIVITY LOGS ENDPOINTS
 app.post('/api/logs', checkDB, async (req, res) => {
   try {

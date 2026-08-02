@@ -151,8 +151,15 @@
           <div><strong>Total Paid:</strong> ₹${order.total.toFixed(2)}</div>
           <div><strong>Payment Method:</strong> ${order.paymentMethod}</div>
           <div><strong>Payment Status:</strong> <span class="status-badge paid">${order.status}</span></div>
-          <div><strong>Shipping Agent:</strong> Coorg Blue Dart Courier</div>
-          <div><strong>Tracking Number:</strong> ${order.trackingId}</div>
+          <div><strong>Shipping Agent:</strong> India Speed Post</div>
+          <div>
+            <strong>Tracking Number:</strong> ${order.trackingId} 
+            ${order.trackingId && order.trackingId !== 'N/A' && order.trackingId !== 'Not Dispatched' ? `
+              <a href="https://myspeedpost.com/" target="_blank" style="margin-left: 8px; color: var(--primary-green); font-weight: 600; text-decoration: underline;">
+                Track on India Post <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
+              </a>
+            ` : ''}
+          </div>
           <div><strong>Customer Name:</strong> ${order.name}</div>
           <div style="grid-column: 1 / -1; margin-top:5px; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px;">
             <strong>Shipping Destination:</strong> ${order.address}
@@ -206,7 +213,7 @@ Thank you for your order! Your wellness and spices package is confirmed.
 - Payment Status: Verified ${order.status}
 
 *Tracking Details:*
-You can track your package via Coorg Blue Dart using Tracking ID: *${order.trackingId}*.
+You can track your package via India Speed Post at https://myspeedpost.com/ using Tracking ID: *${order.trackingId}*.
 
 *Invoice Download:*
 Your professional GST invoice is generated and attached below (PDF). 

@@ -380,6 +380,12 @@ function renderOrdersTable(filterText = "") {
         </select>
       </td>
       <td>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <input type="text" class="form-control" value="${o.trackingId || ''}" id="track-${o.id}" style="padding: 6px 8px; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--light-gray); width: 110px;" placeholder="Tracking No...">
+          <button class="action-btn" onclick="updateOrderTrackingHandler('${o.id}')" style="padding: 6px 8px; background-color: var(--primary-green); color: white; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;" title="Save Tracking"><i class="fa-solid fa-floppy-disk"></i></button>
+        </div>
+      </td>
+      <td>
         <div class="action-btns" style="display: flex; gap: 8px;">
           <button class="action-btn download" style="background-color: var(--primary-green); color: white;" onclick="adminDownloadInvoice('${o.id}')" title="Download Invoice PDF"><i class="fa-solid fa-file-invoice"></i></button>
           <button class="action-btn download" style="background-color: var(--accent-gold); color: white;" onclick="adminDownloadDeliverySlip('${o.id}')" title="Download 4x6 Delivery Label"><i class="fa-solid fa-truck-ramp-box"></i></button>
@@ -391,6 +397,17 @@ function renderOrdersTable(filterText = "") {
 
 window.changeOrderStatusHandler = async function(orderId, newStatus) {
   await window.CoorgDB.updateOrderStatus(orderId, newStatus);
+  renderOrdersTable();
+  renderActivityLogsList();
+};
+
+window.updateOrderTrackingHandler = async function(orderId) {
+  const input = document.getElementById(`track-${orderId}`);
+  if (!input) return;
+  const trackingId = input.value.trim();
+  
+  await window.CoorgDB.updateOrderTracking(orderId, trackingId);
+  alert(`Tracking ID updated successfully for order ${orderId}!`);
   renderOrdersTable();
   renderActivityLogsList();
 };

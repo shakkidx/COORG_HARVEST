@@ -279,6 +279,26 @@
         console.error("Error updating order status on server database:", err);
       }
     },
+    updateOrderTracking: async function(orderId, trackingId) {
+      cache.orders = cache.orders.map(o => {
+        if (o.id === orderId) {
+          o.trackingId = trackingId;
+        }
+        return o;
+      });
+      localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
+      await this.logActivity(`Order ${orderId} tracking number updated to: ${trackingId}`);
+
+      try {
+        await fetch(`/api/orders/${orderId}/tracking`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trackingId })
+        });
+      } catch (err) {
+        console.error("Error updating order tracking on server database:", err);
+      }
+    },
 
     // 6. ACTIVITY LOGS CRUD
     getActivityLogs: function() {
