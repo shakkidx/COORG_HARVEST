@@ -189,8 +189,8 @@ function injectFooter() {
           <p>Bringing you pure spices, handpicked teas, and raw honey straight from our plantations in the hills of Kodagu. 100% natural, sustainable, and direct.</p>
           <div class="social-links">
             <a href="#" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="#" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="${window.CoorgConfig.INSTAGRAM_LINK}" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+            <a href="${window.CoorgConfig.WHATSAPP_LINK}" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
             <a href="#" target="_blank"><i class="fa-brands fa-youtube"></i></a>
           </div>
         </div>
