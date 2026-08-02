@@ -266,6 +266,234 @@ const seedProducts = [
     reviews: [
       { name: "Nikhil P.", rating: 5, date: "2026-06-08", content: "Very fiery! Just two chilies are enough to make a curry spicy. Excellent dry preservation." }
     ]
+  },
+  {
+    id: "coffee-almond",
+    name: "Coorg Almond Coffee",
+    price: 380,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 15,
+    category: "Coffee Collection",
+    image: "images/uploads/coorg almond coffee.jpeg",
+    images: ["images/uploads/coorg almond coffee.jpeg"],
+    description: "Premium single-estate coffee infused with the rich, nutty flavor of toasted almonds. Meticulously roasted to highlight the perfect balance of cocoa notes and almond aroma.",
+    ingredients: ["Shade-grown Arabica ground coffee", "Natural Almond Extract"],
+    benefits: ["Boosts cognitive focus and morning alertness", "Rich in natural antioxidants and essential coffee oils", "Naturally smooth and low-acidity profile"],
+    usage: "Ideal for French press or South Indian filter drip brewing.",
+    origin: "Misty Valley Plantation, Gonikopal, South Kodagu",
+    stock: 30,
+    badge: "New Arrival",
+    reviews: []
+  },
+  {
+    id: "coffee-caramel",
+    name: "Coorg Caramel Coffee",
+    price: 390,
+    oldPrice: null,
+    rating: 4.7,
+    ratingCount: 12,
+    category: "Coffee Collection",
+    image: "images/uploads/coorg caramel coffee.jpeg",
+    images: ["images/uploads/coorg caramel coffee.jpeg"],
+    description: "Smooth medium-roasted coffee blended with the sweet, buttery notes of gourmet caramel. A delightful, aromatic dessert coffee that satisfies sweet cravings.",
+    ingredients: ["Shade-grown Arabica ground coffee", "Natural Caramel Flavoring"],
+    benefits: ["Exquisite sweet caramel aroma and smooth finish", "Clean caffeine boost without sugar crashes", "Perfect for making gourmet hot or cold lattes"],
+    usage: "Brew using filter drip or cold brew method. Add milk and sweeten to taste.",
+    origin: "Misty Valley Plantation, Gonikopal, South Kodagu",
+    stock: 25,
+    badge: "Indulgent",
+    reviews: []
+  },
+  {
+    id: "coffee-choco-orange",
+    name: "Coorg Choco Orange Coffee",
+    price: 420,
+    oldPrice: null,
+    rating: 4.9,
+    ratingCount: 18,
+    category: "Coffee Collection",
+    image: "images/uploads/coorg choco orange coffee.jpeg",
+    images: ["images/uploads/coorg choco orange coffee.jpeg"],
+    description: "An indulgent and sophisticated blend of premium Kodagu coffee, rich dark cocoa undertones, and a bright splash of citrusy orange zest.",
+    ingredients: ["Shade-grown Arabica coffee", "Dark Cocoa Powder", "Dried Orange Peel extract"],
+    benefits: ["Unique gourmet flavor profile (sweet cocoa & tangy citrus)", "High antioxidant counts from pure cocoa and coffee beans", "Elevates mood and energy levels naturally"],
+    usage: "Brew in drip filter or espresso maker. Serve black or with a splash of milk.",
+    origin: "Misty Valley Plantation, Gonikopal, South Kodagu",
+    stock: 20,
+    badge: "Unique Blend",
+    reviews: []
+  },
+  {
+    id: "coffee-roasted-instant",
+    name: "Coorg Roasted Arabica & Robusta Instant Coffee",
+    price: 320,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 22,
+    category: "Coffee Collection",
+    image: "images/uploads/coorg rosted arabica and robusta instent cofee.jpeg",
+    images: ["images/uploads/coorg rosted arabica and robusta instent cofee.jpeg"],
+    description: "A premium quick-brew blend of handpicked shade-grown Arabica and bold Robusta beans. Dissolves instantly for a strong, velvety cup with a golden crema.",
+    ingredients: ["Spray-dried soluble Arabica coffee", "Robusta coffee powder"],
+    benefits: ["Instant preparation—requires no brewing equipment", "Strong, full-bodied taste with a velvety crema layer", "Ideal travel-friendly energy companion"],
+    usage: "Add 1-2 tsp of instant coffee to hot water or milk, stir well, and sweeten.",
+    origin: "Estate Slopes, Somwarpet, North Kodagu",
+    stock: 50,
+    badge: "Quick Brew",
+    reviews: []
+  },
+  {
+    id: "coffee-vanilla",
+    name: "Coorg Vanilla Coffee",
+    price: 380,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 16,
+    category: "Coffee Collection",
+    image: "images/uploads/coorg vanilla coffee.jpeg",
+    images: ["images/uploads/coorg vanilla coffee.jpeg"],
+    description: "A comforting cup of smooth estate coffee blended with the sweet, warm, and creamy flavor of natural Madagascan vanilla bean extracts.",
+    ingredients: ["Arabica ground coffee", "Natural Vanilla Bean extract"],
+    benefits: ["Highly aromatic and soothing vanilla nodes", "Naturally sweet notes reduce the need for extra sweeteners", "Extremely smooth body and clean finish"],
+    usage: "Best prepared as a drip coffee, pour-over, or French press.",
+    origin: "Misty Valley Plantation, Gonikopal, South Kodagu",
+    stock: 35,
+    badge: "Smooth",
+    reviews: []
+  },
+  {
+    id: "teas-ginger",
+    name: "Coorg Ginger Tea",
+    price: 240,
+    oldPrice: null,
+    rating: 4.9,
+    ratingCount: 25,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg ginger tea.jpeg",
+    images: ["images/uploads/coorg ginger tea.jpeg"],
+    description: "A fiery and warming infusion of organic black tea leaves and hand-sorted Kodagu ginger root. Perfect for detoxifying and comforting cold days.",
+    ingredients: ["Black Tea leaves", "Dried Ginger root shards"],
+    benefits: ["Relieves sore throat, cough, and congestion", "Aids digestion and alleviates stomach bloating", "Warming properties boost blood circulation"],
+    usage: "Steep 1 tsp in boiling water for 3-5 minutes. Strain and enjoy with lemon and honey.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 40,
+    badge: "Warming",
+    reviews: []
+  },
+  {
+    id: "teas-lychee",
+    name: "Coorg Lychee Tea",
+    price: 260,
+    oldPrice: null,
+    rating: 4.7,
+    ratingCount: 14,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg lychee tea.jpeg",
+    images: ["images/uploads/coorg lychee tea.jpeg"],
+    description: "A sweet, fruity, and refreshing tea blend infused with the delicate tropical essence of ripe lychee fruits. A sensory floral experience.",
+    ingredients: ["Black tea leaves", "Dried Lychee fruit pulp bits", "Natural Lychee extract"],
+    benefits: ["Rich in Vitamin C and immune-supporting fruit polyphenols", "Incredibly refreshing when served iced on hot afternoons", "Natural, exotic sweet aroma"],
+    usage: "Brew hot, let it cool, and pour over ice with fresh mint leaves.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 30,
+    badge: "Exotic",
+    reviews: []
+  },
+  {
+    id: "teas-mango",
+    name: "Coorg Mango Tea",
+    price: 260,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 19,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg mango tea.jpeg",
+    images: ["images/uploads/coorg mango tea.jpeg"],
+    description: "A tropical getaway in a cup, featuring premium black tea blended with sun-dried mango pieces and a vibrant mango fruit aroma.",
+    ingredients: ["Assam black tea", "Sun-dried Mango pieces", "natural Mango flavoring"],
+    benefits: ["Sweet tropical taste that lifts energy levels", "Contains beneficial fruit flavonoids and antioxidants", "Ideal base for exotic summer mocktails"],
+    usage: "Steep in boiling water for 4 minutes. Serve chilled with a squeeze of lime.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 30,
+    badge: "Fruity",
+    reviews: []
+  },
+  {
+    id: "teas-masala",
+    name: "Coorg Masala Tea",
+    price: 250,
+    oldPrice: null,
+    rating: 4.9,
+    ratingCount: 38,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg masala tea.jpeg",
+    images: ["images/uploads/coorg masala tea.jpeg"],
+    description: "A robust and warming blend of strong Assam CTC tea and authentic Coorg estate spices, including green cardamom, cinnamon, cloves, and ginger.",
+    ingredients: ["Black CTC tea", "Cardamom", "Cinnamon", "Clove", "Black Pepper", "Ginger"],
+    benefits: ["Traditional Ayurvedic immunity and metabolism booster", "Rich, spicy aroma stimulates focus and clarity", "Supports digestion and relieves respiratory fatigue"],
+    usage: "Boil with equal parts water and milk, add 1 tsp tea, simmer for 3 minutes, strain and serve.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 45,
+    badge: "Best Seller",
+    reviews: []
+  },
+  {
+    id: "teas-raspberry",
+    name: "Coorg Raspberry Tea",
+    price: 270,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 17,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg raspberry tea.jpeg",
+    images: ["images/uploads/coorg raspberry tea.jpeg"],
+    description: "A tart and vibrant red berry infusion of premium tea leaves and natural raspberry extract. Fruity, sweet, and comfortingly rich in flavor.",
+    ingredients: ["Black tea leaves", "Dried Raspberry bits", "Hibiscus petals", "Natural Raspberry flavor"],
+    benefits: ["Vibrant berry antioxidants protect cell health", "Fruity tart notes elevate mood and sensory comfort", "Great afternoon refresher with low caffeine"],
+    usage: "Steep in boiling water for 4 minutes. Enjoy hot or iced.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 25,
+    badge: "New Flavor",
+    reviews: []
+  },
+  {
+    id: "teas-rose",
+    name: "Coorg Rose Tea",
+    price: 280,
+    oldPrice: null,
+    rating: 4.8,
+    ratingCount: 21,
+    category: "Herbal Teas",
+    image: "images/uploads/coorg rose tea.jpeg",
+    images: ["images/uploads/coorg rose tea.jpeg"],
+    description: "A soothing and aromatic blend of organic green tea leaves and dried pink rose petals. Extremely delicate, floral, and calming.",
+    ingredients: ["Organic Green Tea", "Dried Rose petals"],
+    benefits: ["Promotes skin glow and contains anti-inflammatory properties", "Natural rose fragrance acts as a mild stress reliever", "Very light caffeine content for evening relaxation"],
+    usage: "Steep in hot (not boiling) water for 2-3 minutes. Sweeten with a dash of wild honey.",
+    origin: "Coorg Estate Slopes, Somwarpet, North Kodagu",
+    stock: 25,
+    badge: "Floral",
+    reviews: []
+  },
+  {
+    id: "specialties-kachampuli",
+    name: "Coorg Kachampuli (Garcinia Cambogia Vinegar)",
+    price: 290,
+    oldPrice: null,
+    rating: 4.9,
+    ratingCount: 30,
+    category: "Coorg Specialties",
+    image: "images/uploads/coorg kachampuli.jpeg",
+    images: ["images/uploads/coorg kachampuli.jpeg"],
+    description: "The legendary dark, thick vinegar of Coorg made from the concentrated extract of wild Garcinia gummi-gutta (Kachampuli) fruit. Essential for traditional Coorg Pandi Curry.",
+    ingredients: ["Concentrated Wild Kachampuli Fruit Extract"],
+    benefits: ["Authentic local souring agent for Coorg meat dishes", "Rich in Hydroxycitric Acid (HCA) to support weight management", "Promotes digestive health and blood sugar balance"],
+    usage: "Add 1-2 tsp to curries (especially pork or chicken) in the final stages of cooking for a tart flavor.",
+    origin: "Home-kitchen Collective, Gonikopal, Kodagu",
+    stock: 20,
+    badge: "Heritage Product",
+    reviews: []
   }
 ];
 
@@ -464,16 +692,17 @@ async function seedDatabase() {
   }
 
   // Seed Products
-  const [prods] = await db.query('SELECT COUNT(*) as count FROM products');
-  if (prods[0].count === 0) {
-    console.log('🌱 Seeding products...');
-    for (const p of seedProducts) {
+  console.log('🌱 Checking catalog products seeding...');
+  for (const p of seedProducts) {
+    const [exists] = await db.query('SELECT id FROM products WHERE id = ?', [p.id]);
+    if (exists.length === 0) {
+      console.log(`🌱 Seeding new product: ${p.name}`);
       await db.query(
         'INSERT INTO products (id, name, price, oldPrice, rating, ratingCount, category, image, images, description, ingredients, benefits, `usage`, origin, stock, badge, reviews) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           p.id, p.name, p.price, p.oldPrice, p.rating, p.ratingCount, p.category, p.image,
-          JSON.stringify(p.images), p.description, JSON.stringify(p.ingredients), JSON.stringify(p.benefits),
-          p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews)
+          JSON.stringify(p.images || []), p.description, JSON.stringify(p.ingredients || []), JSON.stringify(p.benefits || []),
+          p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews || [])
         ]
       );
     }
