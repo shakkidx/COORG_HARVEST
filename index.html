@@ -431,7 +431,10 @@
       // 1. Render dynamic categories on homepage
       const categoriesContainer = document.querySelector(".categories-grid");
       if (categoriesContainer) {
-        const categories = window.CoorgDB.getCategories();
+        const products = window.CoorgDB.getProducts();
+        const categories = window.CoorgDB.getCategories().filter(cat => {
+          return products.some(p => p.category.toLowerCase() === cat.name.toLowerCase());
+        });
         
         const defaultCategoryData = {
           "coorg-spices": {

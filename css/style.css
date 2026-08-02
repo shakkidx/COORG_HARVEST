@@ -3034,7 +3034,13 @@ footer {
     grid-template-columns: 1fr;
   }
   .shop-sidebar {
-    display: none; /* In production, would be expandable slide menu */
+    display: none; /* Hidden by default on mobile/tablet */
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .shop-sidebar.active {
+    display: block !important;
+    animation: fadeIn 0.3s ease;
   }
 }
 
@@ -3578,6 +3584,16 @@ footer {
 
   .tab-pane.active {
     display: block !important;
+  }
+}
+
+#mobile-filter-toggle {
+  display: none !important;
+}
+
+@media (max-width: 1024px) {
+  #mobile-filter-toggle {
+    display: inline-flex !important;
   }
 }
 

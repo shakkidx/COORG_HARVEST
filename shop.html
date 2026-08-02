@@ -124,18 +124,23 @@
         <main>
           
           <!-- Toolbar -->
-          <div class="shop-toolbar">
+          <div class="shop-toolbar" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between;">
             <div class="results-count">
               Showing <span id="displayed-count">0</span> of <span id="total-count">0</span> items
             </div>
             
-            <div class="sort-select-wrapper">
-              <label for="sort-dropdown" style="font-size:0.9rem; margin-right:10px; color:var(--medium-gray);">Sort By:</label>
-              <select id="sort-dropdown">
-                <option value="popular">Popularity / Rating</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+              <button class="btn btn-outline" id="mobile-filter-toggle" style="padding: 6px 12px; font-size: 0.85rem; border-radius: var(--border-radius-sm); border: 1px solid var(--light-gray); background-color: var(--cream-light); color: var(--primary-green); cursor: pointer; display: flex; align-items: center; gap: 6px;" type="button">
+                <i class="fa-solid fa-sliders"></i> Filter Catalog
+              </button>
+              
+              <div class="sort-select-wrapper">
+                <select id="sort-dropdown" style="padding: 6px 12px; border-radius: var(--border-radius-sm);">
+                  <option value="popular">Popularity / Rating</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -163,10 +168,13 @@
       // Initialize database connection
       await window.CoorgDB.init();
 
-      // Render Category filters dynamically
+      // Render Category filters dynamically (exclude empty categories)
       const filterList = document.getElementById("category-filter-list");
       if (filterList) {
-        const categories = window.CoorgDB.getCategories();
+        const products = window.CoorgDB.getProducts();
+        const categories = window.CoorgDB.getCategories().filter(cat => {
+          return products.some(p => p.category.toLowerCase() === cat.name.toLowerCase());
+        });
         filterList.innerHTML = categories.map(cat => `
           <li>
             <label>
@@ -175,6 +183,19 @@
             </label>
           </li>
         `).join('');
+      }
+
+      // Mobile Filter Toggle Handler
+      const filterToggle = document.getElementById("mobile-filter-toggle");
+      const sidebar = document.querySelector(".shop-sidebar");
+      if (filterToggle && sidebar) {
+        filterToggle.addEventListener("click", function() {
+          sidebar.classList.toggle("active");
+          const isActive = sidebar.classList.contains("active");
+          filterToggle.innerHTML = isActive 
+            ? `<i class="fa-solid fa-xmark"></i> Hide Filters`
+            : `<i class="fa-solid fa-sliders"></i> Filter Catalog`;
+        });
       }
 
       // 1. Initial configuration
