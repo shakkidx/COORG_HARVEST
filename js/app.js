@@ -185,12 +185,14 @@ function injectFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col footer-about">
-          <img src="logo.png" alt="Coorg Harvest Logo" style="height: 95px; width: auto; object-fit: contain; margin-bottom: 20px; background: white; padding: 5px; border-radius: var(--border-radius-sm);">
-          <p>Bringing you pure spices, handpicked teas, and raw honey straight from our plantations in the hills of Kodagu. 100% natural, sustainable, and direct.</p>
+          <div class="footer-logo-wrapper" style="display: inline-block; background: var(--white); padding: 8px 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--accent-gold);">
+            <img src="logo.png" alt="Coorg Harvest Logo" style="height: 60px; width: auto; object-fit: contain; display: block;">
+          </div>
+          <p style="line-height: 1.6; margin-bottom: 20px; color: rgba(247, 243, 232, 0.75); font-size: 0.9rem;">Bringing you pure spices, handpicked teas, single-estate coffees, and raw forest honey straight from our family-run plantations in Kodagu. 100% natural and direct.</p>
           <div class="social-links">
             <a href="#" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="${window.CoorgConfig.INSTAGRAM_LINK}" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-            <a href="${window.CoorgConfig.WHATSAPP_LINK}" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="${window.CoorgConfig.INSTAGRAM_LINK || '#'}" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+            <a href="${window.CoorgConfig.WHATSAPP_LINK || '#'}" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
             <a href="#" target="_blank"><i class="fa-brands fa-youtube"></i></a>
           </div>
         </div>
@@ -229,21 +231,25 @@ function injectFooter() {
               <span>info@coorgharvest.com</span>
             </li>
           </ul>
-          <div class="footer-map-container">
-            <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15582.493920959141!2d75.9686001!3d12.172422!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba5bb6e18f2bbdb%3A0xe5a3c2005a76c7ee!2sGonikopal%2C%20Karnataka%20571213!5e0!3m2!1sen!2sin!4v1680000000000!5m2!1sen!2sin" 
-              width="100%" 
-              height="100%" 
-              style="border:0;" 
-              allowfullscreen="" 
-              loading="lazy" 
-              referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
+          
+          <div class="trust-badges" style="margin-top: 25px; display: flex; gap: 20px;">
+            <div class="badge-item" style="text-align: center; color: rgba(247,243,232,0.75); font-size: 0.75rem; flex: 1;">
+              <i class="fa-solid fa-leaf" style="color: var(--accent-gold); font-size: 1.3rem; display: block; margin-bottom: 5px;"></i>
+              100% Organic
+            </div>
+            <div class="badge-item" style="text-align: center; color: rgba(247,243,232,0.75); font-size: 0.75rem; flex: 1;">
+              <i class="fa-solid fa-handshake" style="color: var(--accent-gold); font-size: 1.3rem; display: block; margin-bottom: 5px;"></i>
+              Direct Sourced
+            </div>
+            <div class="badge-item" style="text-align: center; color: rgba(247,243,232,0.75); font-size: 0.75rem; flex: 1;">
+              <i class="fa-solid fa-award" style="color: var(--accent-gold); font-size: 1.3rem; display: block; margin-bottom: 5px;"></i>
+              Pure Quality
+            </div>
           </div>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; ${new Date().getFullYear()} Coorg Harvest. All rights reserved. Sourced ethically from Western Ghats.</p>
+        <p>&copy; ${new Date().getFullYear()} Coorg Harvest. All rights reserved. Sourced ethically from the Western Ghats.</p>
         <div class="footer-bottom-links">
           <span>COD Available</span>
           <span>&middot;</span>
@@ -289,10 +295,6 @@ function injectMobileBottomNav() {
       <i class="fa-solid fa-bag-shopping"></i>
       <span class="badge cart-count-badge" style="display: none;">0</span>
       <span>Cart</span>
-    </a>
-    <a href="admin-login.html" class="mobile-nav-item ${currentPath.includes('admin-login.html') ? 'active' : ''}">
-      <i class="fa-solid fa-user"></i>
-      <span>Account</span>
     </a>
   `;
   document.body.appendChild(bottomNav);

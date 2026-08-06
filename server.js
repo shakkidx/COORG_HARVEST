@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const multer = require('multer');
+const { Client } = require('ssh2');
+const net = require('net');
 
 // Load environment variables
 dotenv.config();
@@ -36,9 +38,109 @@ app.use(express.json());
 // Serve static assets from the current directory
 app.use(express.static(path.join(__dirname)));
 
-// Global Database Pool variable
+// Global Database Pool and SSH Tunnel variables
 let db = null;
 let dbConnected = false;
+let sshTunnelServer = null;
+let sshTunnelClient = null;
+
+// Graceful SSH Tunnel Shutdown
+function closeSshTunnel() {
+  if (sshTunnelServer) {
+    try {
+      sshTunnelServer.close();
+      console.log('🔌 Local SSH tunnel server closed.');
+    } catch (e) {}
+    sshTunnelServer = null;
+  }
+  if (sshTunnelClient) {
+    try {
+      sshTunnelClient.end();
+      console.log('🔒 SSH connection ended.');
+    } catch (e) {}
+    sshTunnelClient = null;
+  }
+}
+
+// Establish SSH connection and set up local port forwarding to remote MySQL
+function setupSshTunnel() {
+  return new Promise((resolve, reject) => {
+    if (process.env.SSH_TUNNEL_ENABLED !== 'true') {
+      return resolve(null);
+    }
+
+    console.log('🔒 SSH Tunnel enabled. Initiating secure connection to Hostinger...');
+    const sshClient = new Client();
+
+    sshClient.on('ready', () => {
+      console.log('✅ SSH Connection Ready. Setting up port forwarding...');
+      
+      const localPort = parseInt(process.env.DB_LOCAL_PORT || '3307');
+      const remoteHost = '127.0.0.1'; // Hostinger MySQL local loopback
+      const remotePort = parseInt(process.env.DB_PORT || '3306');
+
+      const server = net.createServer((socket) => {
+        sshClient.forwardOut(
+          '127.0.0.1',
+          socket.remotePort,
+          remoteHost,
+          remotePort,
+          (err, stream) => {
+            if (err) {
+              console.error('❌ SSH Port Forwarding failed:', err);
+              socket.end();
+              return;
+            }
+            socket.pipe(stream).pipe(socket);
+          }
+        );
+      });
+
+      server.listen(localPort, '127.0.0.1', (err) => {
+        if (err) {
+          sshClient.end();
+          return reject(err);
+        }
+        console.log(`🔌 SSH Tunnel listening on 127.0.0.1:${localPort} -> Remote ${remoteHost}:${remotePort}`);
+        sshTunnelServer = server;
+        sshTunnelClient = sshClient;
+        resolve(localPort);
+      });
+
+      server.on('error', (err) => {
+        console.error('❌ Local SSH tunnel server error:', err);
+      });
+    });
+
+    sshClient.on('error', (err) => {
+      console.error('❌ SSH Tunnel Connection Error:', err);
+      reject(err);
+    });
+
+    sshClient.connect({
+      host: process.env.SSH_HOST,
+      port: parseInt(process.env.SSH_PORT || '22'),
+      username: process.env.SSH_USER,
+      password: process.env.SSH_PASSWORD
+    });
+  });
+}
+
+// Graceful process shutdown listener
+const gracefulShutdown = async () => {
+  console.log('🌿 Shutting down Coorg Harvest server gracefully...');
+  closeSshTunnel();
+  if (db) {
+    try {
+      await db.end();
+      console.log('📦 Database pool closed.');
+    } catch (e) {}
+  }
+  process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 // Default Seed Data
 const seedProducts = [
@@ -339,11 +441,25 @@ const seedMockOrders = [
 
 // Initialize database connection and schemas
 async function initDatabase() {
-  const host = process.env.DB_HOST || 'localhost';
+  let host = process.env.DB_HOST || 'localhost';
+  let port = parseInt(process.env.DB_PORT || '3306');
   const user = process.env.DB_USER || 'u279206464_coorgharvest';
   const password = process.env.DB_PASSWORD || '';
   const database = process.env.DB_NAME || 'u279206464_coorgharvest';
-  const port = parseInt(process.env.DB_PORT || '3306');
+
+  try {
+    // Attempt SSH Tunneling if enabled
+    if (process.env.SSH_TUNNEL_ENABLED === 'true') {
+      const tunnelPort = await setupSshTunnel();
+      if (tunnelPort) {
+        host = '127.0.0.1';
+        port = tunnelPort;
+      }
+    }
+  } catch (tunnelError) {
+    console.error('⚠️ SSH Tunneling failed, attempting direct connection fallback...');
+    console.error(tunnelError.message);
+  }
 
   console.log(`🔌 Attempting to connect to MySQL database at ${host}:${port}...`);
 
@@ -376,6 +492,9 @@ async function initDatabase() {
     console.error('❌ Database initialization failed!');
     console.error(error.message);
     console.log('⚠️ Running in OFFLINE mock storage fallback mode. Database modifications will not be saved.');
+    
+    // Clean up tunnel if database connection failed
+    closeSshTunnel();
   }
 }
 

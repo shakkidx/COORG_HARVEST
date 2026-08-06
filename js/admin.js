@@ -585,8 +585,56 @@ window.adminDownloadInvoice = function(id) {
   doc.save(`Invoice_${order.id}.pdf`);
 };
 
+// Helper to load company logo and convert it to solid black for thermal printing
+const loadBlackLogo = () => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i+1];
+          const b = data[i+2];
+          const a = data[i+3];
+          if (a > 0) {
+            // Calculate grayscale luminance
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (gray > 240) {
+              data[i+3] = 0; // Turn white/light background transparent
+            } else {
+              // Convert to solid black while preserving original anti-aliased opacity
+              data[i] = 0;
+              data[i+1] = 0;
+              data[i+2] = 0;
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error("Failed to process logo to black:", err);
+        resolve(null);
+      }
+    };
+    img.onerror = (err) => {
+      console.error("Failed to load logo image:", err);
+      resolve(null);
+    };
+    img.src = 'logo.png';
+  });
+};
+
 // Admin Reprinting 4x6 Delivery Label
-window.adminDownloadDeliverySlip = function(id) {
+window.adminDownloadDeliverySlip = async function(id) {
   const order = window.CoorgDB.getOrderById(id);
   if (!order) return;
 
@@ -598,50 +646,63 @@ window.adminDownloadDeliverySlip = function(id) {
     format: [4, 6]
   });
 
-  // Margins & branding
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(46, 94, 62);
-  doc.text("COORG HARVEST", 0.3, 0.4);
+  // Try to load and add the black logo image
+  const logoDataUrl = await loadBlackLogo();
+  if (logoDataUrl) {
+    // Width: 1.1 in, Height: 0.93 in (retains 1.18 aspect ratio: 657/555)
+    doc.addImage(logoDataUrl, 'PNG', 0.25, 0.25, 1.1, 0.93);
+  }
+
+  // Margins & branding (All in pure black)
+  doc.setTextColor(0, 0, 0);
   
-  doc.setFontSize(8);
+  // Sender Details (next to logo, starts at x=1.45)
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 100, 100);
-  doc.text("Bypass Road, Gonikopal, Kodagu - 571213", 0.3, 0.55);
-  doc.text("Phone: +91 9880077218", 0.3, 0.7);
+  doc.setFontSize(8);
+  doc.text("FROM:", 1.45, 0.35);
+  doc.setFont("helvetica", "bold");
+  doc.text("COORG HARVEST", 1.45, 0.50);
+  doc.setFont("helvetica", "normal");
+  doc.text("Bypass Road, Gonikopal,", 1.45, 0.65);
+  doc.text("Kodagu - 571213", 1.45, 0.80);
+  doc.text("Phone: +91 9880077218", 1.45, 0.95);
 
-  // Outer border box
-  doc.setDrawColor(200, 200, 200);
-  doc.rect(0.2, 0.8, 3.6, 5.0);
+  // Outer border box (0.15 in margins all around: fits 3.7x5.7 within 4x6 page)
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.015);
+  doc.rect(0.15, 0.15, 3.7, 5.7);
 
-  // TO: Section (Recipient)
-  doc.setFillColor(245, 245, 245);
-  doc.rect(0.25, 0.9, 3.5, 1.4, "F");
+  // Separator line under header
+  doc.line(0.15, 1.25, 3.85, 1.25);
+
+  // SHIP TO: Section (Recipient box with black outline, white background)
+  doc.rect(0.2, 1.35, 3.6, 1.2);
   
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(29, 29, 29);
-  doc.text("SHIP TO:", 0.35, 1.05);
+  doc.text("SHIP TO:", 0.3, 1.55);
 
   doc.setFontSize(10);
-  doc.text(order.name, 0.35, 1.25);
+  doc.text(order.name, 0.3, 1.75);
   
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  const splitAddr = doc.splitTextToSize(order.address, 3.3);
-  doc.text(splitAddr, 0.35, 1.45);
+  const splitAddr = doc.splitTextToSize(order.address, 3.4);
+  doc.text(splitAddr, 0.3, 1.95);
   doc.setFont("helvetica", "bold");
-  doc.text(`Phone: ${order.phone}`, 0.35, 2.15);
+  doc.text(`Phone: ${order.phone}`, 0.3, 2.43);
+
+  // Separator line under SHIP TO section
+  doc.line(0.15, 2.65, 3.85, 2.65);
 
   // Order meta info
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  doc.text(`Order ID: ${order.id}`, 0.3, 2.5);
-  doc.text(`Date: ${order.date.split(',')[0]}`, 0.3, 2.65);
-  doc.text(`Tracking ID: ${order.trackingId}`, 0.3, 2.8);
+  doc.text(`Order ID: ${order.id}`, 0.25, 2.82);
+  doc.text(`Date: ${order.date.split(',')[0]}`, 0.25, 2.97);
+  doc.text(`Tracking ID: ${order.trackingId}`, 0.25, 3.12);
 
-  // Cash collect display
+  // Cash collect display (Outline box, white background)
   let collectAmount = 0;
   let statusText = "PAID ONLINE";
   if (order.paymentMethod.toUpperCase() === 'COD') {
@@ -649,37 +710,39 @@ window.adminDownloadDeliverySlip = function(id) {
     statusText = `CASH TO COLLECT: INR ${collectAmount.toFixed(2)}`;
   }
 
-  doc.setFillColor(order.paymentMethod.toUpperCase() === 'COD' ? 245 : 230, order.paymentMethod.toUpperCase() === 'COD' ? 220 : 245, order.paymentMethod.toUpperCase() === 'COD' ? 220 : 230);
-  doc.rect(0.25, 2.95, 3.5, 0.5, "F");
+  doc.rect(0.2, 3.25, 3.6, 0.6);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(order.paymentMethod.toUpperCase() === 'COD' ? 180 : 46, order.paymentMethod.toUpperCase() === 'COD' ? 50 : 94, order.paymentMethod.toUpperCase() === 'COD' ? 50 : 62);
-  doc.text(statusText, 0.35, 3.28);
-
-  // If COD, add deposit warning
+  
   if (order.paymentMethod.toUpperCase() === 'COD') {
+    doc.text(statusText, 0.3, 3.48);
+    // If COD, add deposit warning (in black)
     doc.setFontSize(6.5);
     doc.setFont("helvetica", "italic");
-    doc.setTextColor(150, 50, 50);
-    doc.text("*Online COD Deposit of INR 50.00 paid. Do not collect full total.*", 0.35, 3.38);
+    doc.text("*Online COD Deposit of INR 50.00 paid. Do not collect full total.*", 0.3, 3.68);
+  } else {
+    // Center it vertically inside the 0.6 tall box
+    doc.text(statusText, 0.3, 3.60);
   }
+
+  // Separator line under Order/Payment section
+  doc.line(0.15, 3.95, 3.85, 3.95);
 
   // Items checklist
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(29, 29, 29);
-  doc.text("PACKING ITEMS CHECKLIST:", 0.3, 3.65);
+  doc.text("PACKING ITEMS CHECKLIST:", 0.25, 4.15);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  let itemY = 3.85;
+  let itemY = 4.38;
   order.items.forEach((item, index) => {
     // Checkbox
-    doc.rect(0.3, itemY - 0.08, 0.1, 0.1);
+    doc.rect(0.25, itemY - 0.08, 0.1, 0.1);
     
     // Qty & Name
     doc.setFont("helvetica", "bold");
-    doc.text(`[ Qty: ${item.qty} ]`, 0.5, itemY);
+    doc.text(`[ Qty: ${item.qty} ]`, 0.45, itemY);
     doc.setFont("helvetica", "normal");
     doc.text(item.name.substring(0, 32), 1.2, itemY);
     
@@ -689,8 +752,7 @@ window.adminDownloadDeliverySlip = function(id) {
   // Footer label tag
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  doc.setTextColor(150, 150, 150);
-  doc.text("Coorg Harvest Courier Label (4x6)", 2.0, 5.7, null, null, "center");
+  doc.text("Coorg Harvest Courier Label (4x6)", 2.0, 5.75, null, null, "center");
 
   doc.save(`Label_${order.id}.pdf`);
 };
