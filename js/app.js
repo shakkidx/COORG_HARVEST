@@ -191,8 +191,8 @@ function injectFooter() {
           <p style="line-height: 1.6; margin-bottom: 20px; color: rgba(247, 243, 232, 0.75); font-size: 0.9rem;">Bringing you pure spices, handpicked teas, single-estate coffees, and raw forest honey straight from our family-run plantations in Kodagu. 100% natural and direct.</p>
           <div class="social-links">
             <a href="#" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="${window.CoorgConfig.INSTAGRAM_LINK || '#'}" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-            <a href="${window.CoorgConfig.WHATSAPP_LINK || '#'}" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="${(window.CoorgConfig && window.CoorgConfig.INSTAGRAM_LINK) || '#'}" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+            <a href="${(window.CoorgConfig && window.CoorgConfig.WHATSAPP_LINK) || '#'}" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
             <a href="#" target="_blank"><i class="fa-brands fa-youtube"></i></a>
           </div>
         </div>
