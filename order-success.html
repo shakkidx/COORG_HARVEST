@@ -222,8 +222,33 @@ _Sourced ethically from Kodagu plantations._
 _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${currentTime}</span>`;
     }
 
+    // Helper to load original company logo as full color data URL
+    const loadOriginalLogo = () => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (err) {
+            console.error("Failed to convert logo to data URL:", err);
+            resolve(null);
+          }
+        };
+        img.onerror = () => {
+          resolve(null);
+        };
+        img.src = 'logo.png';
+      });
+    };
+
     // CLIENT-SIDE PDF GENERATION USING JSPDF
-    window.generateInvoicePDF = function() {
+    window.generateInvoicePDF = async function() {
       if (!activeOrder) return;
 
       const { jsPDF } = window.jspdf;
@@ -232,72 +257,93 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       const themeColor = "#2E5E3E"; // primary forest green
       const goldColor = "#C5A059";  // accent gold
 
-      // 1. BRAND BLOCK & HEADER
-      doc.setFillColor(12, 32, 18); // Dark forest green
-      doc.rect(0, 0, 210, 40, "F");
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("COORG HARVEST", 15, 18);
-      
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(9);
-      doc.setTextColor(197, 160, 89); // gold
-      doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+      // Load Logo
+      const logoBase64 = await loadOriginalLogo();
 
-      doc.setTextColor(255, 255, 255);
+      // HEADER SECTION (Clean, premium branding)
+      if (logoBase64) {
+        // Render company logo
+        doc.addImage(logoBase64, 'PNG', 15, 8, 22, 22);
+        
+        doc.setTextColor(46, 94, 62); // Theme Green
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.text("COORG HARVEST", 40, 18);
+        
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(8.5);
+        doc.setTextColor(197, 160, 89); // Gold
+        doc.text("Premium Spices, Teas & Wellness from Kodagu", 40, 24);
+      } else {
+        // Fallback if logo fails
+        doc.setTextColor(46, 94, 62);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.text("COORG HARVEST", 15, 18);
+        
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.setTextColor(197, 160, 89);
+        doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+      }
+
+      // Company details on the right
+      doc.setTextColor(80, 80, 80);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.text("Email: info@coorgharvest.com", 145, 15);
-      doc.text("Phone: +91 9880077218", 145, 20);
-      doc.text("Bypass Road, Gonikopal, Kodagu", 145, 25);
-      doc.text("PIN Code: 571213, Karnataka, India", 145, 30);
+      doc.setFontSize(8.5);
+      doc.text("Email: info@coorgharvest.com", 145, 13);
+      doc.text("Phone: +91 9880077218", 145, 18);
+      doc.text("Bypass Road, Gonikopal, Kodagu", 145, 23);
+      doc.text("PIN Code: 571213, Karnataka, India", 145, 28);
+
+      // Separator Line
+      doc.setDrawColor(220, 215, 200);
+      doc.setLineWidth(0.4);
+      doc.line(15, 34, 195, 34);
 
       // 2. INVOICE META
       doc.setTextColor(29, 29, 29);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text("TAX INVOICE", 15, 55);
+      doc.setFontSize(15);
+      doc.text("CUSTOMER INVOICE", 15, 52);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`Invoice Number: ${activeOrder.id}`, 15, 63);
-      doc.text(`Invoice Date: ${activeOrder.date}`, 15, 69);
-      doc.text(`Payment Gateway ID: pay_${Math.floor(100000 + Math.random() * 900000)}`, 15, 75);
-      doc.text(`Payment Status: ${activeOrder.status}`, 15, 81);
+      doc.text(`Invoice Number: ${activeOrder.id}`, 15, 60);
+      doc.text(`Invoice Date: ${activeOrder.date}`, 15, 66);
+      doc.text(`Payment Status: ${activeOrder.status}`, 15, 72);
 
       // 3. CUSTOMER DETAILS
       doc.setFont("helvetica", "bold");
-      doc.text("Billed & Shipped To:", 125, 55);
+      doc.text("Billed & Shipped To:", 125, 52);
       doc.setFont("helvetica", "normal");
       
       // Handle text wrap for long addresses
-      const splitAddress = doc.splitTextToSize(activeOrder.address, 75);
-      doc.text(activeOrder.name, 125, 63);
-      doc.text(`Phone: ${activeOrder.phone}`, 125, 69);
-      doc.text(`Email: ${activeOrder.email}`, 125, 75);
-      doc.text(splitAddress, 125, 81);
+      const splitAddress = doc.splitTextToSize(activeOrder.address, 70);
+      doc.text(activeOrder.name, 125, 60);
+      doc.text(`Phone: ${activeOrder.phone}`, 125, 66);
+      doc.text(`Email: ${activeOrder.email}`, 125, 72);
+      doc.text(splitAddress, 125, 78);
 
       // 4. ITEMS TABLE HEADERS
       doc.setDrawColor(232, 226, 213);
       doc.setFillColor(247, 243, 232); // warm cream
-      doc.rect(15, 105, 180, 8, "F");
+      doc.rect(15, 95, 180, 8, "F");
       
       doc.setFont("helvetica", "bold");
       doc.setTextColor(46, 94, 62);
-      doc.text("Item Sourced Product Name", 18, 110.5);
-      doc.text("Price (INR)", 115, 110.5);
-      doc.text("Qty", 150, 110.5);
-      doc.text("Total (INR)", 172, 110.5);
+      doc.text("Item Sourced Product Name", 18, 100.5);
+      doc.text("Price (INR)", 115, 100.5);
+      doc.text("Qty", 150, 100.5);
+      doc.text("Total (INR)", 172, 100.5);
       
       // Table line
-      doc.line(15, 113, 195, 113);
+      doc.line(15, 103, 195, 103);
 
       // 5. TABLE BODY ITEMS
       doc.setFont("helvetica", "normal");
       doc.setTextColor(29, 29, 29);
-      let currentY = 120;
+      let currentY = 110;
 
       activeOrder.items.forEach(item => {
         doc.text(item.name, 18, currentY);
@@ -313,24 +359,9 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       doc.line(15, currentY + 2, 195, currentY + 2);
       currentY += 12;
 
-      // 6. PRICING CALCULATIONS (Subtotal, GST, discounts)
-      // Assume 5% GST (CGST 2.5% + SGST 2.5%) is included in prices
-      const gstRate = 0.05;
-      const subTotalVal = activeOrder.subtotal;
-      const gstAmt = (subTotalVal / (1 + gstRate)) * gstRate;
-      const cgstAmt = gstAmt / 2;
-      const sgstAmt = gstAmt / 2;
-
+      // 6. PRICING CALCULATIONS (Subtotal, discounts, delivery) - NO TAXES
       doc.text("Subtotal:", 125, currentY);
       doc.text(`Rs. ${activeOrder.subtotal.toFixed(2)}`, 172, currentY);
-      currentY += 6;
-
-      doc.text("CGST (2.5%):", 125, currentY);
-      doc.text(`Rs. ${cgstAmt.toFixed(2)}`, 172, currentY);
-      currentY += 6;
-
-      doc.text("SGST (2.5%):", 125, currentY);
-      doc.text(`Rs. ${sgstAmt.toFixed(2)}`, 172, currentY);
       currentY += 6;
 
       if (activeOrder.discount > 0) {
@@ -353,23 +384,41 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       doc.setTextColor(46, 94, 62);
       doc.text("Grand Total:", 125, currentY + 3);
       doc.text(`Rs. ${activeOrder.total.toFixed(2)}`, 172, currentY + 3);
+      currentY += 10;
 
-      // 7. MOCK QR CODE & LEGAL STAMP
+      if (activeOrder.paymentMethod.toUpperCase() === 'COD') {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(29, 29, 29);
+        doc.text("COD Deposit Paid (Online):", 125, currentY);
+        doc.text(`-Rs. 50.00`, 172, currentY);
+        currentY += 6;
+        
+        doc.line(125, currentY - 2, 195, currentY - 2);
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(180, 50, 50);
+        doc.text("Balance Due on Delivery:", 125, currentY + 3);
+        doc.text(`Rs. ${(activeOrder.total - 50).toFixed(2)}`, 172, currentY + 3);
+        currentY += 12;
+
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7.5);
+        doc.setTextColor(150, 50, 50);
+        doc.text("*Note: Online COD deposit of Rs. 50.00 is non-refundable.", 15, currentY - 12);
+      }
+
+      // 7. VERIFIED BADGE (NO GSTIN)
+      const stampY = currentY - 15;
       doc.setDrawColor(46, 94, 62);
-      doc.rect(15, currentY - 20, 30, 30);
-      doc.setFontSize(6);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(138, 129, 112);
-      doc.text("VERIFIED TRANSACTION", 16, currentY + 13);
-      doc.text("GSTIN: 29AAXFC8802R1ZH", 16, currentY + 16);
-      
-      // Simple QR Code Box pattern drawing inside PDF
-      doc.setFillColor(46, 94, 62);
-      doc.rect(18, currentY - 17, 7, 7);
-      doc.rect(35, currentY - 17, 7, 7);
-      doc.rect(18, currentY - 10, 7, 7);
-      doc.rect(26, currentY - 14, 5, 5);
-      doc.rect(32, currentY - 7, 4, 4);
+      doc.setLineWidth(0.4);
+      doc.circle(30, stampY + 12, 10, "S");
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(46, 94, 62);
+      doc.text("VERIFIED", 30, stampY + 10, null, null, "center");
+      doc.text("TRANSACTION", 30, stampY + 13, null, null, "center");
 
       // 8. SIGNATURE AND TERMS
       doc.setFontSize(8);
@@ -382,8 +431,8 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       doc.text("3. Grievances can be submitted directly on info@coorgharvest.com.", 15, 41 + currentY);
 
       doc.setFont("helvetica", "italic");
-      doc.setTextColor(46, 94, 62);
-      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(9.5);
       doc.text("Thank you for supporting Kodagu's small farmers!", 105, 275, null, null, "center");
 
       // Save PDF

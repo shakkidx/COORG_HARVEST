@@ -421,7 +421,7 @@ window.updateOrderTrackingHandler = async function(orderId) {
 };
 
 // Admin Reprinting PDF Action (binds to success page invoice methods)
-window.adminDownloadInvoice = function(id) {
+window.adminDownloadInvoice = async function(id) {
   const order = window.CoorgDB.getOrderById(id);
   if (!order) return;
 
@@ -431,69 +431,91 @@ window.adminDownloadInvoice = function(id) {
   const themeColor = "#2E5E3E";
   const goldColor = "#C5A059";
 
-  // HEADER BANNER
-  doc.setFillColor(12, 32, 18);
-  doc.rect(0, 0, 210, 40, "F");
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.text("COORG HARVEST", 15, 18);
-  
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
-  doc.setTextColor(197, 160, 89);
-  doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+  // Load Logo
+  const logoBase64 = await loadOriginalLogo();
 
-  doc.setTextColor(255, 255, 255);
+  // HEADER SECTION (Clean, premium branding)
+  if (logoBase64) {
+    // Render company logo
+    doc.addImage(logoBase64, 'PNG', 15, 8, 22, 22);
+    
+    doc.setTextColor(46, 94, 62); // Theme Green
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("COORG HARVEST", 40, 18);
+    
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8.5);
+    doc.setTextColor(197, 160, 89); // Gold
+    doc.text("Premium Spices, Teas & Wellness from Kodagu", 40, 24);
+  } else {
+    // Fallback if logo fails
+    doc.setTextColor(46, 94, 62);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("COORG HARVEST", 15, 18);
+    
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(197, 160, 89);
+    doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+  }
+
+  // Company details on the right
+  doc.setTextColor(80, 80, 80);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Email: info@coorgharvest.com", 145, 15);
-  doc.text("Phone: +91 9880077218", 145, 20);
-  doc.text("Bypass Road, Gonikopal, Kodagu", 145, 25);
-  doc.text("PIN Code: 571213, Karnataka, India", 145, 30);
+  doc.setFontSize(8.5);
+  doc.text("Email: info@coorgharvest.com", 145, 13);
+  doc.text("Phone: +91 9880077218", 145, 18);
+  doc.text("Bypass Road, Gonikopal, Kodagu", 145, 23);
+  doc.text("PIN Code: 571213, Karnataka, India", 145, 28);
+
+  // Separator Line
+  doc.setDrawColor(220, 215, 200);
+  doc.setLineWidth(0.4);
+  doc.line(15, 34, 195, 34);
 
   // META
   doc.setTextColor(29, 29, 29);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("CUSTOMER INVOICE", 15, 55);
+  doc.setFontSize(15);
+  doc.text("CUSTOMER INVOICE", 15, 52);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text(`Invoice Number: ${order.id}`, 15, 63);
-  doc.text(`Invoice Date: ${order.date}`, 15, 69);
-  doc.text(`Payment Status: ${order.status}`, 15, 75);
+  doc.text(`Invoice Number: ${order.id}`, 15, 60);
+  doc.text(`Invoice Date: ${order.date}`, 15, 66);
+  doc.text(`Payment Status: ${order.status}`, 15, 72);
 
   // BILLING ADDRESS
   doc.setFont("helvetica", "bold");
-  doc.text("Billed & Shipped To:", 125, 55);
+  doc.text("Billed & Shipped To:", 125, 52);
   doc.setFont("helvetica", "normal");
   
-  const splitAddress = doc.splitTextToSize(order.address, 75);
-  doc.text(order.name, 125, 63);
-  doc.text(`Phone: ${order.phone}`, 125, 69);
-  doc.text(`Email: ${order.email}`, 125, 75);
-  doc.text(splitAddress, 125, 81);
+  const splitAddress = doc.splitTextToSize(order.address, 70);
+  doc.text(order.name, 125, 60);
+  doc.text(`Phone: ${order.phone}`, 125, 66);
+  doc.text(`Email: ${order.email}`, 125, 72);
+  doc.text(splitAddress, 125, 78);
 
   // TABLE HEADERS
   doc.setDrawColor(232, 226, 213);
   doc.setFillColor(247, 243, 232);
-  doc.rect(15, 105, 180, 8, "F");
+  doc.rect(15, 95, 180, 8, "F");
   
   doc.setFont("helvetica", "bold");
   doc.setTextColor(46, 94, 62);
-  doc.text("Item Sourced Product Name", 18, 110.5);
-  doc.text("Price (INR)", 115, 110.5);
-  doc.text("Qty", 150, 110.5);
-  doc.text("Total (INR)", 172, 110.5);
+  doc.text("Item Sourced Product Name", 18, 100.5);
+  doc.text("Price (INR)", 115, 100.5);
+  doc.text("Qty", 150, 100.5);
+  doc.text("Total (INR)", 172, 100.5);
   
-  doc.line(15, 113, 195, 113);
+  doc.line(15, 103, 195, 103);
 
   // TABLE BODY ITEMS
   doc.setFont("helvetica", "normal");
   doc.setTextColor(29, 29, 29);
-  let currentY = 120;
+  let currentY = 110;
 
   order.items.forEach(item => {
     doc.text(item.name, 18, currentY);
@@ -509,22 +531,11 @@ window.adminDownloadInvoice = function(id) {
   doc.line(15, currentY + 2, 195, currentY + 2);
   currentY += 12;
 
-  // MATHS
-  const gstRate = 0.05;
-  const gstAmt = (order.subtotal / (1 + gstRate)) * gstRate;
-  const cgstAmt = gstAmt / 2;
-  const sgstAmt = gstAmt / 2;
-
+  // MATHS (WITHOUT TAXES)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
   doc.text("Subtotal:", 125, currentY);
   doc.text(`Rs. ${order.subtotal.toFixed(2)}`, 172, currentY);
-  currentY += 6;
-
-  doc.text("CGST (2.5%):", 125, currentY);
-  doc.text(`Rs. ${cgstAmt.toFixed(2)}`, 172, currentY);
-  currentY += 6;
-
-  doc.text("SGST (2.5%):", 125, currentY);
-  doc.text(`Rs. ${sgstAmt.toFixed(2)}`, 172, currentY);
   currentY += 6;
 
   if (order.discount > 0) {
@@ -571,26 +582,49 @@ window.adminDownloadInvoice = function(id) {
     doc.text("*Note: Online COD deposit of Rs. 50.00 is non-refundable.", 15, currentY - 12);
   }
 
-  // VERIFIED STAMP
+  // VERIFIED BADGE (NO GSTIN)
+  const stampY = currentY - 15;
   doc.setDrawColor(46, 94, 62);
-  doc.rect(15, currentY - 20, 30, 30);
-  doc.setFontSize(6);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(138, 129, 112);
-  doc.text("VERIFIED TRANSACTION", 16, currentY + 13);
-  doc.text("GSTIN: 29AAXFC8802R1ZH", 16, currentY + 16);
-  
-  doc.setFillColor(46, 94, 62);
-  doc.rect(18, currentY - 17, 7, 7);
-  doc.rect(35, currentY - 17, 7, 7);
-  doc.rect(18, currentY - 10, 7, 7);
+  doc.setLineWidth(0.4);
+  doc.circle(30, stampY + 12, 10, "S");
+  doc.setFontSize(6.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(46, 94, 62);
+  doc.text("VERIFIED", 30, stampY + 10, null, null, "center");
+  doc.text("TRANSACTION", 30, stampY + 13, null, null, "center");
 
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setFont("helvetica", "italic");
+  doc.setTextColor(100, 100, 100);
   doc.text("Thank you for supporting Kodagu's small farmers!", 105, 275, null, null, "center");
 
   // SAVE
   doc.save(`Invoice_${order.id}.pdf`);
+};
+
+// Helper to load original company logo as full color data URL
+const loadOriginalLogo = () => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error("Failed to convert logo to data URL:", err);
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      resolve(null);
+    };
+    img.src = 'logo.png';
+  });
 };
 
 // Helper to load company logo and convert it to solid black for thermal printing
