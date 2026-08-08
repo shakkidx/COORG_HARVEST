@@ -80,20 +80,31 @@ function setupSshTunnel() {
       const remotePort = parseInt(process.env.DB_PORT || '3306');
 
       const server = net.createServer((socket) => {
-        sshClient.forwardOut(
-          '127.0.0.1',
-          socket.remotePort,
-          remoteHost,
-          remotePort,
-          (err, stream) => {
-            if (err) {
-              console.error('❌ SSH Port Forwarding failed:', err);
-              socket.end();
-              return;
-            }
-            socket.pipe(stream).pipe(socket);
+        try {
+          // Verify client connection is active
+          if (!sshClient.authenticated) {
+            console.error('❌ SSH Client not authenticated. Cannot forward socket.');
+            socket.end();
+            return;
           }
-        );
+          sshClient.forwardOut(
+            '127.0.0.1',
+            socket.remotePort,
+            remoteHost,
+            remotePort,
+            (err, stream) => {
+              if (err) {
+                console.error('❌ SSH Port Forwarding failed:', err);
+                socket.end();
+                return;
+              }
+              socket.pipe(stream).pipe(socket);
+            }
+          );
+        } catch (forwardError) {
+          console.error('❌ SSH Port Forwarding exception:', forwardError.message);
+          socket.end();
+        }
       });
 
       server.listen(localPort, '127.0.0.1', (err) => {
@@ -115,6 +126,10 @@ function setupSshTunnel() {
     sshClient.on('error', (err) => {
       console.error('❌ SSH Tunnel Connection Error:', err);
       reject(err);
+    });
+
+    sshClient.on('close', () => {
+      console.log('🔌 SSH connection closed.');
     });
 
     sshClient.connect({
