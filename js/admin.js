@@ -230,19 +230,19 @@ function renderProductsTable(filterText = "") {
 
   tbody.innerHTML = filtered.map(p => `
     <tr>
-      <td><img src="${p.image}" alt="${p.name}"></td>
-      <td style="font-weight:600; color:var(--primary-green);">${p.name}</td>
-      <td>${p.category}</td>
-      <td style="font-weight:600;">₹${p.price}</td>
-      <td>
+      <td data-label="Image"><img src="${p.image}" alt="${p.name}"></td>
+      <td data-label="Product Name" style="font-weight:600; color:var(--primary-green);">${p.name}</td>
+      <td data-label="Category">${p.category}</td>
+      <td data-label="Price" style="font-weight:600;">₹${p.price}</td>
+      <td data-label="Stock">
         <span style="font-weight:600; color:${p.stock < 20 ? 'var(--red)' : 'var(--dark-text)'};">
           ${p.stock} units
         </span>
         ${p.stock < 20 ? '<br><small style="color:var(--red); font-weight:500;">(Low stock warning)</small>' : ''}
       </td>
-      <td><i class="fa-solid fa-star" style="color:#F39C12;"></i> ${p.rating.toFixed(1)} (${p.ratingCount})</td>
-      <td>
-        <div class="action-btns">
+      <td data-label="Rating"><i class="fa-solid fa-star" style="color:#F39C12;"></i> ${p.rating.toFixed(1)} (${p.ratingCount})</td>
+      <td data-label="Actions">
+        <div class="action-btns" style="justify-content: flex-end;">
           <button class="action-btn edit" onclick="openEditProductModal('${p.id}')" title="Edit Specs"><i class="fa-regular fa-pen-to-square"></i></button>
           <button class="action-btn delete" onclick="deleteProductHandler('${p.id}')" title="Delete Product"><i class="fa-regular fa-trash-can"></i></button>
         </div>
@@ -377,30 +377,30 @@ function renderOrdersTable(filterText = "") {
 
   tbody.innerHTML = sorted.map(o => `
     <tr>
-      <td style="font-weight:600; color:var(--primary-green);">${o.id}</td>
-      <td>
+      <td data-label="Order ID" style="font-weight:600; color:var(--primary-green);">${o.id}</td>
+      <td data-label="Customer">
         <strong>${o.name}</strong><br>
         <small style="color:var(--medium-gray);">${o.phone}</small>
       </td>
-      <td>${o.date}</td>
-      <td style="font-weight:600;">₹${o.total.toFixed(2)}</td>
-      <td><span style="font-size:0.8rem; font-weight:600; color:var(--earth-brown);">${o.paymentMethod}</span></td>
-      <td>
-        <select class="form-control" style="padding:6px; font-size:0.8rem; border-radius:4px; border-color:var(--light-gray);" onchange="changeOrderStatusHandler('${o.id}', this.value)">
+      <td data-label="Date">${o.date}</td>
+      <td data-label="Total" style="font-weight:600;">₹${o.total.toFixed(2)}</td>
+      <td data-label="Payment"><span style="font-size:0.8rem; font-weight:600; color:var(--earth-brown);">${o.paymentMethod}</span></td>
+      <td data-label="Status">
+        <select class="form-control" style="padding:6px; font-size:0.8rem; border-radius:4px; border-color:var(--light-gray); width: 100%; max-width: 150px;" onchange="changeOrderStatusHandler('${o.id}', this.value)">
           <option value="Paid" ${o.status === 'Paid' ? 'selected' : ''}>Paid / Verified</option>
           <option value="Pending COD" ${o.status === 'Pending COD' ? 'selected' : ''}>Pending COD</option>
           <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
           <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
         </select>
       </td>
-      <td>
-        <div style="display: flex; gap: 4px; align-items: center;">
+      <td data-label="Tracking">
+        <div style="display: flex; gap: 4px; align-items: center; justify-content: flex-end; width: 100%;">
           <input type="text" class="form-control" value="${o.trackingId || ''}" id="track-${o.id}" style="padding: 6px 8px; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--light-gray); width: 110px;" placeholder="Tracking No...">
           <button class="action-btn" onclick="updateOrderTrackingHandler('${o.id}')" style="padding: 6px 8px; background-color: var(--primary-green); color: white; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;" title="Save Tracking"><i class="fa-solid fa-floppy-disk"></i></button>
         </div>
       </td>
-      <td>
-        <div class="action-btns" style="display: flex; gap: 8px;">
+      <td data-label="Downloads">
+        <div class="action-btns" style="display: flex; gap: 8px; justify-content: flex-end;">
           <button class="action-btn download" style="background-color: var(--primary-green); color: white;" onclick="adminDownloadInvoice('${o.id}')" title="Download Invoice PDF"><i class="fa-solid fa-file-invoice"></i></button>
           <button class="action-btn download" style="background-color: var(--accent-gold); color: white;" onclick="adminDownloadDeliverySlip('${o.id}')" title="Download 4x6 Delivery Label"><i class="fa-solid fa-truck-ramp-box"></i></button>
         </div>
