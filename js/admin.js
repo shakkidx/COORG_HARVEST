@@ -641,6 +641,23 @@ const loadBlackLogo = () => {
   });
 };
 
+const loadQrCode = function(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+  });
+};
+
 // Admin Reprinting 4x6 Delivery Label
 window.adminDownloadDeliverySlip = async function(id) {
   const order = window.CoorgDB.getOrderById(id);
@@ -718,32 +735,22 @@ window.adminDownloadDeliverySlip = async function(id) {
     statusText = `CASH TO COLLECT: INR ${collectAmount.toFixed(2)}`;
   }
 
-  doc.rect(0.2, 3.25, 3.6, 0.6);
+  doc.rect(0.2, 3.25, 3.6, 0.45);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  
-  if (order.paymentMethod.toUpperCase() === 'COD') {
-    doc.text(statusText, 0.3, 3.48);
-    // If COD, add deposit warning (in black)
-    doc.setFontSize(6.5);
-    doc.setFont("helvetica", "italic");
-    doc.text("*Online COD Deposit of INR 50.00 paid. Do not collect full total.*", 0.3, 3.68);
-  } else {
-    // Center it vertically inside the 0.6 tall box
-    doc.text(statusText, 0.3, 3.60);
-  }
+  doc.setFontSize(11);
+  doc.text(statusText, 0.3, 3.53);
 
   // Separator line under Order/Payment section
-  doc.line(0.15, 3.95, 3.85, 3.95);
+  doc.line(0.15, 3.82, 3.85, 3.82);
 
   // Items checklist
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("PACKING ITEMS CHECKLIST:", 0.25, 4.15);
+  doc.text("PACKING ITEMS CHECKLIST:", 0.25, 4.02);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  let itemY = 4.38;
+  let itemY = 4.22;
   order.items.forEach((item, index) => {
     // Checkbox
     doc.rect(0.25, itemY - 0.08, 0.1, 0.1);
@@ -756,6 +763,15 @@ window.adminDownloadDeliverySlip = async function(id) {
     
     itemY += 0.22;
   });
+
+  // Fetch and insert dynamic QR Code
+  const qrDataUrl = await loadQrCode('https://coorgharvest.com');
+  if (qrDataUrl) {
+    doc.addImage(qrDataUrl, 'PNG', 2.9, 4.65, 0.8, 0.8);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.text("coorgharvest.com", 3.3, 5.58, null, null, "center");
+  }
 
   // Footer label tag
   doc.setFont("helvetica", "normal");
