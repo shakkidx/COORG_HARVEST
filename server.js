@@ -1017,7 +1017,7 @@ app.get('/api/feeds/facebook', async (req, res) => {
       const availability = p.stock > 0 ? 'in stock' : 'out of stock';
       const cleanDesc = p.description ? p.description.replace(/<\/?[^>]+(>|$)/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim() : '';
       const cleanName = p.name ? p.name.replace(/&/g, "&amp;") : '';
-      const imageUrl = p.image.startsWith('http') ? p.image : `https://coorgharvest.com${p.image}`;
+      const imageUrl = p.image.startsWith('http') ? p.image : p.image.startsWith('/') ? `https://coorgharvest.com${p.image}` : `https://coorgharvest.com/${p.image}`;
 
       xml += `    <item>
       <g:id>${p.id}</g:id>
