@@ -689,14 +689,23 @@ async function seedDatabase() {
         {
           title: "From the Heart of Coorg to Your Home",
           subtitle: "Premium organic spices, shade-grown Arabica coffees, and wellness products sourced directly from local farmers in the misty hills of Kodagu, Karnataka.",
-          image: "images/uploads/slide1.jpg",
-          linkText: "Shop Now"
+          image: "images/hero_slide_1.png",
+          linkText: "Shop Now",
+          link: "shop.html"
         },
         {
-          title: "Authentic From Coorg: Pure Spices. Wild by Nature.",
+          title: "Pure Spices. Wild by Nature.",
           subtitle: "Handpicked bold black pepper, aromatic cardamom, and wild forest cinnamon harvested using sustainable shade cultivation methods in Kodagu.",
-          image: "images/uploads/slide2.jpg",
-          linkText: "Shop Spices"
+          image: "images/hero_slide_2.png",
+          linkText: "Shop Spices",
+          link: "shop.html?category=Coorg%20Spices"
+        },
+        {
+          title: "Sip the Goodness of Nature",
+          subtitle: "Enjoy therapeutic wellness with our organic loose herbal teas, handpicked green tea leaves, and wild forest honey infusions.",
+          image: "images/hero_slide_3.png",
+          linkText: "Shop Teas",
+          link: "shop.html?category=Tea%20Collections"
         }
       ])}
     ];
