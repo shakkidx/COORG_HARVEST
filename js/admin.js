@@ -729,10 +729,10 @@ window.adminDownloadDeliverySlip = async function(id) {
 
   // Cash collect display (Outline box, white background)
   let collectAmount = 0;
-  let statusText = "PAID ONLINE";
+  let statusText = "PAID ONLINE (PAID)";
   if (order.paymentMethod.toUpperCase() === 'COD') {
     collectAmount = order.total - 50.00;
-    statusText = `CASH TO COLLECT: INR ${collectAmount.toFixed(2)}`;
+    statusText = `CASH TO COLLECT (COD): INR ${collectAmount.toFixed(2)}`;
   }
 
   doc.rect(0.2, 3.25, 3.6, 0.45);
