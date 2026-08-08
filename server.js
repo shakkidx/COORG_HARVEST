@@ -1000,6 +1000,55 @@ app.post('/api/settings', checkDB, async (req, res) => {
   }
 });
 
+// 5.6. DYNAMIC PRODUCT XML FEEDS (FOR FACEBOOK CATALOG & GOOGLE MERCHANT)
+app.get('/api/feeds/facebook', async (req, res) => {
+  try {
+    const [productsRows] = await db.query('SELECT * FROM products');
+    
+    let xml = `<?xml version="1.0"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Coorg Harvest</title>
+    <link>https://coorgharvest.com</link>
+    <description>Premium organic spices, shade-grown Arabica coffees, and wellness products sourced directly from local farmers in Coorg.</description>\n`;
+
+    for (const p of productsRows) {
+      const price = parseFloat(p.price).toFixed(2);
+      const availability = p.stock > 0 ? 'in stock' : 'out of stock';
+      const cleanDesc = p.description ? p.description.replace(/<\/?[^>]+(>|$)/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim() : '';
+      const cleanName = p.name ? p.name.replace(/&/g, "&amp;") : '';
+      const imageUrl = p.image.startsWith('http') ? p.image : `https://coorgharvest.com${p.image}`;
+
+      xml += `    <item>
+      <g:id>${p.id}</g:id>
+      <g:title>${cleanName}</g:title>
+      <g:description>${cleanDesc}</g:description>
+      <g:link>https://coorgharvest.com/product.html?id=${p.id}</g:link>
+      <g:image_link>${imageUrl}</g:image_link>
+      <g:condition>new</g:condition>
+      <g:availability>${availability}</g:availability>\n`;
+      
+      if (p.oldPrice) {
+        xml += `      <g:price>${parseFloat(p.oldPrice).toFixed(2)} INR</g:price>\n`;
+        xml += `      <g:sale_price>${price} INR</g:sale_price>\n`;
+      } else {
+        xml += `      <g:price>${price} INR</g:price>\n`;
+      }
+
+      xml += `      <g:brand>Coorg Harvest</g:brand>
+    </item>\n`;
+    }
+
+    xml += `  </channel>
+</rss>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.status(200).send(xml);
+  } catch (err) {
+    res.status(500).header('Content-Type', 'application/xml').send(`<error>${err.message}</error>`);
+  }
+});
+
 // 6. IMAGE UPLOAD ENDPOINT
 app.post('/api/upload', upload.single('image'), (req, res) => {
   try {
