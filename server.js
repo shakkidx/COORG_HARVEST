@@ -678,6 +678,7 @@ async function seedDatabase() {
     console.log('🌱 Seeding default settings...');
     const defaultSettings = [
       { key: "delivery_charge", value: "50" },
+      { key: "free_delivery_threshold", value: "500" },
       { key: "cod_enabled", value: "true" },
       { key: "google_analytics_id", value: "" },
       { key: "google_merchant_id", value: "" },

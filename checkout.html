@@ -352,7 +352,8 @@
 
       const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
       const deliveryCharge = parseFloat(settings.delivery_charge || "50");
-      const shipping = subtotal > 500 ? 0 : deliveryCharge;
+      const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
+      const shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
       shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
 
       grandTotal = subtotal - discount + shipping;
@@ -536,9 +537,12 @@
       const dateStr = new Date().toLocaleString();
       const trackingNumber = `CHTRK${Math.floor(1000000 + Math.random() * 9000000)}`;
 
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const discount = calculateDiscountAmount(cart);
       const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
       const deliveryCharge = parseFloat(settings.delivery_charge || "50");
-      const shipping = subtotal > 500 ? 0 : deliveryCharge;
+      const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
+      const shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
 
       const newOrder = {
         id: orderId,

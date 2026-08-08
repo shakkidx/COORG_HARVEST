@@ -1060,6 +1060,7 @@ window.loadStoreSettings = function() {
   const settings = window.CoorgDB.getSettings() || {};
 
   document.getElementById("setting-delivery-charge").value = settings.delivery_charge || "50";
+  document.getElementById("setting-free-delivery-threshold").value = settings.free_delivery_threshold || "500";
   document.getElementById("setting-cod-enabled").value = settings.cod_enabled || "true";
   
   document.getElementById("setting-google-analytics-id").value = settings.google_analytics_id || "";
@@ -1141,9 +1142,10 @@ function renderBannersManager(bannersJson) {
 window.saveShippingSettings = async function(e) {
   e.preventDefault();
   const delivery_charge = document.getElementById("setting-delivery-charge").value;
+  const free_delivery_threshold = document.getElementById("setting-free-delivery-threshold").value;
   const cod_enabled = document.getElementById("setting-cod-enabled").value;
 
-  await window.CoorgDB.updateSettings({ delivery_charge, cod_enabled });
+  await window.CoorgDB.updateSettings({ delivery_charge, free_delivery_threshold, cod_enabled });
   alert("✅ Delivery and COD settings saved successfully!");
 };
 

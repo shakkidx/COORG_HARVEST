@@ -570,10 +570,11 @@ function renderCartItems() {
     discountRow.style.display = "none";
   }
 
-  // Free delivery above 500, else flat delivery charge from settings
+  // Free delivery above threshold, else flat delivery charge from settings
   const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
   const deliveryCharge = parseFloat(settings.delivery_charge || "50");
-  const shipping = subtotal > 500 ? 0 : deliveryCharge;
+  const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
+  const shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
   shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
 
   const total = subtotal - discount + shipping;
