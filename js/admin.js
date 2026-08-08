@@ -1044,8 +1044,6 @@ window.deleteCategoryHandler = async function(id) {
   }
 };
 
-};
-
 window.cancelCategoryEdit = function() {
   document.getElementById("admin-category-form").reset();
   document.getElementById("category-id").value = "";
