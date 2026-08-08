@@ -725,6 +725,7 @@ const checkDB = (req, res, next) => {
 
 // 1. GET ALL SYNC DATA
 app.get('/api/db-sync', checkDB, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   try {
     const [productsRows] = await db.query('SELECT * FROM products');
     const [couponsRows] = await db.query('SELECT * FROM coupons');
@@ -978,6 +979,7 @@ app.post('/api/logs', checkDB, async (req, res) => {
 
 // 5.5. SETTINGS ENDPOINTS
 app.get('/api/settings', checkDB, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   try {
     const [rows] = await db.query('SELECT * FROM settings');
     const settings = rows.reduce((acc, curr) => {
@@ -1011,6 +1013,7 @@ app.post('/api/settings', checkDB, async (req, res) => {
 
 // 5.6. DYNAMIC PRODUCT XML FEEDS (FOR FACEBOOK CATALOG & GOOGLE MERCHANT)
 app.get('/api/feeds/facebook', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   try {
     const [productsRows] = await db.query('SELECT * FROM products');
     
