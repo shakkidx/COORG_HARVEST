@@ -424,7 +424,7 @@
 
       if (activePaymentMethod === 'cod') {
         amountToPay = 50.00;
-        explanation = `Scan to pay the non-refundable ₹50.00 COD deposit. The balance of ₹${(grandTotal - 50).toFixed(2)} is due at delivery.`;
+        explanation = `Scan to pay the <strong>non-refundable ₹50.00 COD deposit</strong> (covering packing and delivery charges). The balance of <strong>₹${(grandTotal - 50).toFixed(2)}</strong> is due at delivery.<br><span style="color:#D35400; font-size:0.8rem; display:block; margin-top:8px; line-height:1.4; font-weight:600;">⚠️ ശ്രദ്ധിക്കുക: നിങ്ങൾ ഈ ഓർഡർ സ്വീകരിക്കാതെ റിട്ടേൺ ആവുകയാണെങ്കിൽ, ഈ ₹50 റീഫണ്ട് ലഭിക്കുന്നതല്ല (ഇത് പാക്കിംഗ് & ഡെലിവറി ചാർജ് ഇനത്തിൽ ഈടാക്കുന്നതാണ്).</span>`;
         // Force display UPI view for COD deposit
         document.getElementById("modal-view-upi").style.display = 'block';
         document.getElementById("modal-view-card").style.display = 'none';
@@ -567,7 +567,7 @@
       // REDIRECT TO WHATSAPP API WITH INVOICE / ORDER SUMMARY
       let itemsText = cart.map(i => `- ${i.name} x ${i.qty} (₹${(i.price * i.qty).toFixed(2)})`).join('\n');
       let paymentText = activePaymentMethod.toUpperCase() === 'COD' 
-        ? `COD (₹50 Deposit Paid online)\n*Balance to Collect at Delivery:* ₹${(grandTotal - 50).toFixed(2)}\n*(Note: ₹50 online COD deposit is non-refundable)*`
+        ? `COD (₹50 Deposit Paid online)\n*Balance to Collect at Delivery:* ₹${(grandTotal - 50).toFixed(2)}\n*(Note: ₹50 online COD deposit covers packing/delivery and is non-refundable if the order is returned / not collected)*`
         : `UPI Paid (Full Amount)`;
 
       let waMessage = `*New Order Confirmed!* 🌾\n` +
