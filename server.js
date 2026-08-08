@@ -456,7 +456,7 @@ const seedMockOrders = [
 
 // Initialize database connection and schemas
 async function initDatabase() {
-  let host = process.env.DB_HOST || 'localhost';
+  let host = process.env.DB_HOST || '127.0.0.1';
   let port = parseInt(process.env.DB_PORT || '3306');
   const user = process.env.DB_USER || 'u279206464_coorgharvest';
   const password = process.env.DB_PASSWORD || 'Coorgharvest4%';
