@@ -292,6 +292,16 @@
 
     document.addEventListener("DOMContentLoaded", async function() {
       await window.CoorgDB.init();
+      
+      // Check if COD is disabled in settings
+      const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+      if (settings.cod_enabled === 'false') {
+        const codOption = document.querySelector(".payment-method-item[onclick*='cod']");
+        if (codOption) {
+          codOption.style.setProperty("display", "none", "important");
+        }
+      }
+
       // Clear previous payment overlay state
       document.getElementById("gateway-modal-overlay").classList.remove("active");
       
@@ -340,8 +350,10 @@
         discountRow.style.display = "flex";
       }
 
-      const shipping = 40;
-      shippingEl.textContent = `₹${shipping.toFixed(2)}`;
+      const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+      const deliveryCharge = parseFloat(settings.delivery_charge || "50");
+      const shipping = subtotal > 500 ? 0 : deliveryCharge;
+      shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
 
       grandTotal = subtotal - discount + shipping;
       totalEl.textContent = `₹${grandTotal.toFixed(2)}`;
@@ -524,9 +536,9 @@
       const dateStr = new Date().toLocaleString();
       const trackingNumber = `CHTRK${Math.floor(1000000 + Math.random() * 9000000)}`;
 
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const discount = calculateDiscountAmount(cart);
-      const shipping = 40;
+      const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+      const deliveryCharge = parseFloat(settings.delivery_charge || "50");
+      const shipping = subtotal > 500 ? 0 : deliveryCharge;
 
       const newOrder = {
         id: orderId,

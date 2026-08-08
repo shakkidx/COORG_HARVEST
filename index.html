@@ -507,6 +507,57 @@
         }).join('');
       }
 
+      // 1.5. Render dynamic hero banners if configured in settings
+      const settingsObj = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+      let banners = [];
+      try {
+        if (settingsObj.homepage_banners) {
+          banners = JSON.parse(settingsObj.homepage_banners);
+        }
+      } catch (e) {
+        console.error("Error parsing homepage banners:", e);
+      }
+
+      if (banners && banners.length > 0) {
+        const sliderContainer = document.querySelector(".hero-slider");
+        if (sliderContainer) {
+          sliderContainer.innerHTML = banners.map((slide, index) => `
+            <div class="hero-slide ${index === 0 ? 'active' : ''}">
+              <div class="container hero-container">
+                <div class="hero-left">
+                  <p class="hero-label">Authentic from Coorg</p>
+                  <h1>${slide.title}</h1>
+                  <p class="hero-desc">${slide.subtitle}</p>
+                  <div class="hero-btns">
+                    <a href="${slide.link || 'shop.html'}" class="btn btn-primary">${slide.linkText || 'Shop Now'} <i class="fa-solid fa-cart-shopping"></i></a>
+                    <a href="#categories" class="btn btn-outline-white">Explore Collections <i class="fa-solid fa-leaf"></i></a>
+                  </div>
+                </div>
+                <div class="hero-right">
+                  <div class="hero-image-wrapper">
+                    <img src="${slide.image}" alt="${slide.title}" class="hero-slide-img" loading="${index === 0 ? 'eager' : 'lazy'}">
+                    <div class="hero-image-overlay"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+
+          // Re-render dots
+          const dotsContainer = document.querySelector(".slider-dots");
+          if (dotsContainer) {
+            dotsContainer.innerHTML = banners.map((_, index) => `
+              <span class="dot ${index === 0 ? 'active' : ''}" onclick="currentSlide(${index})"></span>
+            `).join('');
+          }
+          
+          // Re-initialize slider
+          if (window.initializeHeroSlider) {
+            window.initializeHeroSlider();
+          }
+        }
+      }
+
       // 2. Render best sellers
       const bestSellers = window.CoorgDB.getProducts().slice(0, 4); // Fetch first 4
       const container = document.getElementById("bestsellers-container");

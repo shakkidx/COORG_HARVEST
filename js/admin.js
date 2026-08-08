@@ -156,6 +156,10 @@ function setupTabSwitches() {
         viewTitle.textContent = "Product Categories CRUD";
         headerBtn.style.display = "none";
         renderCategoriesTable();
+      } else if (targetView === "settings-view") {
+        viewTitle.textContent = "Store Settings & API Control";
+        headerBtn.style.display = "none";
+        window.loadStoreSettings();
       }
     });
   });
@@ -253,6 +257,7 @@ window.openAddProductModal = function() {
   document.getElementById("modal-form-title").textContent = "Add New Product";
   document.getElementById("product-crud-form").reset();
   document.getElementById("crud-id").value = "";
+  document.getElementById("crud-old-price").value = "";
   
   // Set default placeholder nature image
   document.getElementById("crud-image").value = "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=600&q=80";
@@ -271,6 +276,7 @@ window.openEditProductModal = function(id) {
   document.getElementById("crud-name").value = p.name;
   document.getElementById("crud-category").value = p.category;
   document.getElementById("crud-price").value = p.price;
+  document.getElementById("crud-old-price").value = p.oldPrice || "";
   document.getElementById("crud-stock").value = p.stock;
   document.getElementById("crud-image").value = p.image;
   document.getElementById("crud-desc").value = p.description;
@@ -296,6 +302,8 @@ window.saveProductCrudForm = async function() {
   const name = document.getElementById("crud-name").value.trim();
   const category = document.getElementById("crud-category").value;
   const price = parseFloat(document.getElementById("crud-price").value);
+  const oldPriceVal = document.getElementById("crud-old-price").value;
+  const oldPrice = oldPriceVal ? parseFloat(oldPriceVal) : null;
   const stock = parseInt(document.getElementById("crud-stock").value);
   const image = document.getElementById("crud-image").value;
   const description = document.getElementById("crud-desc").value.trim();
@@ -309,7 +317,7 @@ window.saveProductCrudForm = async function() {
     const oldProduct = window.CoorgDB.getProductById(id);
     const updated = {
       ...oldProduct,
-      name, category, price, stock, image, description, origin, ingredients, benefits, usage
+      name, category, price, oldPrice, stock, image, description, origin, ingredients, benefits, usage
     };
     await window.CoorgDB.updateProduct(updated);
   } else {
@@ -317,7 +325,7 @@ window.saveProductCrudForm = async function() {
     const newId = category.toLowerCase().replace(/ /g, "-") + "-" + name.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "");
     const newProduct = {
       id: newId,
-      name, category, price, stock, image, description, origin, ingredients, benefits, usage,
+      name, category, price, oldPrice, stock, image, description, origin, ingredients, benefits, usage,
       rating: 5.0,
       ratingCount: 0,
       badge: "New Sourcing",
@@ -1036,10 +1044,148 @@ window.deleteCategoryHandler = async function(id) {
   }
 };
 
+};
+
 window.cancelCategoryEdit = function() {
   document.getElementById("admin-category-form").reset();
   document.getElementById("category-id").value = "";
   document.getElementById("category-form-title").textContent = "Create New Category";
   document.getElementById("btn-save-category").innerHTML = `Create Category <i class="fa-solid fa-folder-plus"></i>`;
   document.getElementById("btn-cancel-edit-category").style.display = "none";
+};
+
+// ==========================================
+// STORE SETTINGS CONTROLLERS & EVENT HANDLERS
+// ==========================================
+
+window.loadStoreSettings = function() {
+  const settings = window.CoorgDB.getSettings() || {};
+
+  document.getElementById("setting-delivery-charge").value = settings.delivery_charge || "50";
+  document.getElementById("setting-cod-enabled").value = settings.cod_enabled || "true";
+  
+  document.getElementById("setting-google-analytics-id").value = settings.google_analytics_id || "";
+  document.getElementById("setting-google-merchant-id").value = settings.google_merchant_id || "";
+  document.getElementById("setting-meta-pixel-id").value = settings.meta_pixel_id || "";
+  document.getElementById("setting-meta-api-key").value = settings.meta_api_key || "";
+  document.getElementById("setting-delivery-partner-api").value = settings.delivery_partner_api || "";
+
+  renderBannersManager(settings.homepage_banners);
+};
+
+function renderBannersManager(bannersJson) {
+  const container = document.getElementById("banners-manager-container");
+  if (!container) return;
+
+  let banners = [];
+  try {
+    if (bannersJson) {
+      banners = typeof bannersJson === 'string' ? JSON.parse(bannersJson) : bannersJson;
+    }
+  } catch (e) {
+    console.error("Error parsing banners in admin:", e);
+  }
+
+  // Fallback default banners if none configured yet
+  if (!banners || banners.length === 0) {
+    banners = [
+      {
+        title: "From the Heart of Coorg to Your Home",
+        subtitle: "Premium organic spices, shade-grown Arabica coffees, and wellness products sourced directly from local farmers in the misty hills of Kodagu, Karnataka.",
+        image: "images/uploads/slide1.jpg",
+        linkText: "Shop Now",
+        link: "shop.html"
+      },
+      {
+        title: "Authentic From Coorg: Pure Spices. Wild by Nature.",
+        subtitle: "Handpicked bold black pepper, aromatic cardamom, and wild forest cinnamon harvested using sustainable shade cultivation methods in Kodagu.",
+        image: "images/uploads/slide2.jpg",
+        linkText: "Shop Spices",
+        link: "shop.html?category=Premium%20Spices"
+      }
+    ];
+  }
+
+  container.innerHTML = banners.map((slide, index) => `
+    <div class="banner-slide-item" style="border: 1px solid var(--light-gray); padding: 15px; border-radius: 6px; background-color: var(--white);">
+      <h4 style="margin-bottom:10px; color:var(--primary-green); display:flex; justify-content:space-between;">
+        <span>Slide ${index + 1}</span>
+        <span style="font-size:0.75rem; color:var(--medium-gray);">Index: ${index}</span>
+      </h4>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.75rem; margin-bottom:2px;">Slide Title</label>
+          <input type="text" class="form-control banner-title" value="${slide.title || ''}" placeholder="Banner Title" required style="font-size:0.85rem; padding:6px 10px;">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.75rem; margin-bottom:2px;">Slide Subtitle</label>
+          <textarea class="form-control banner-subtitle" rows="2" placeholder="Banner Subtitle" required style="font-size:0.85rem; padding:6px 10px;">${slide.subtitle || ''}</textarea>
+        </div>
+        <div class="form-row-2" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:0;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label style="font-size:0.75rem; margin-bottom:2px;">Button Text</label>
+            <input type="text" class="form-control banner-link-text" value="${slide.linkText || ''}" placeholder="Shop Now" required style="font-size:0.85rem; padding:6px 10px;">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label style="font-size:0.75rem; margin-bottom:2px;">Button Link</label>
+            <input type="text" class="form-control banner-link" value="${slide.link || ''}" placeholder="shop.html" style="font-size:0.85rem; padding:6px 10px;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.75rem; margin-bottom:2px;">Image URL / Path</label>
+          <input type="text" class="form-control banner-image" value="${slide.image || ''}" placeholder="images/uploads/slide.jpg" required style="font-size:0.85rem; padding:6px 10px;">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.saveShippingSettings = async function(e) {
+  e.preventDefault();
+  const delivery_charge = document.getElementById("setting-delivery-charge").value;
+  const cod_enabled = document.getElementById("setting-cod-enabled").value;
+
+  await window.CoorgDB.updateSettings({ delivery_charge, cod_enabled });
+  alert("✅ Delivery and COD settings saved successfully!");
+};
+
+window.saveIntegrationSettings = async function(e) {
+  e.preventDefault();
+  const google_analytics_id = document.getElementById("setting-google-analytics-id").value;
+  const google_merchant_id = document.getElementById("setting-google-merchant-id").value;
+  const meta_pixel_id = document.getElementById("setting-meta-pixel-id").value;
+  const meta_api_key = document.getElementById("setting-meta-api-key").value;
+  const delivery_partner_api = document.getElementById("setting-delivery-partner-api").value;
+
+  await window.CoorgDB.updateSettings({
+    google_analytics_id,
+    google_merchant_id,
+    meta_pixel_id,
+    meta_api_key,
+    delivery_partner_api
+  });
+  alert("✅ SEO and API integration settings saved successfully!");
+};
+
+window.saveBannersSettings = async function() {
+  const items = document.querySelectorAll(".banner-slide-item");
+  const banners = [];
+
+  for (const item of items) {
+    const title = item.querySelector(".banner-title").value.trim();
+    const subtitle = item.querySelector(".banner-subtitle").value.trim();
+    const linkText = item.querySelector(".banner-link-text").value.trim();
+    const link = item.querySelector(".banner-link").value.trim();
+    const image = item.querySelector(".banner-image").value.trim();
+
+    if (!title || !subtitle || !image) {
+      alert("⚠️ Please fill out all required slide details.");
+      return;
+    }
+
+    banners.push({ title, subtitle, linkText, link, image });
+  }
+
+  await window.CoorgDB.updateSettings({ homepage_banners: JSON.stringify(banners) });
+  alert("✅ Homepage banners saved successfully!");
 };

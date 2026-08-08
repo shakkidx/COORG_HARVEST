@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", async function() {
   // Initialize and sync database from server
   await window.CoorgDB.init();
 
+  // Inject Google Analytics & Meta Pixel dynamically
+  injectTrackingScripts();
+
   // Inject FontAwesome CDN if not present
   if (!document.querySelector('link[href*="font-awesome"]')) {
     const fa = document.createElement('link');
@@ -19,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   injectBackToTop();
 
   // 6. INITIALIZE SPLIT SCREEN HERO SLIDER
-  initializeHeroSlider();
+  window.initializeHeroSlider();
 
   // 2. STICKY HEADER ON SCROLL
   const header = document.getElementById("site-header");
@@ -567,8 +570,10 @@ function renderCartItems() {
     discountRow.style.display = "none";
   }
 
-  // Free delivery above 500, else flat 50
-  const shipping = subtotal > 500 ? 0 : 50;
+  // Free delivery above 500, else flat delivery charge from settings
+  const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+  const deliveryCharge = parseFloat(settings.delivery_charge || "50");
+  const shipping = subtotal > 500 ? 0 : deliveryCharge;
   shippingEl.textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
 
   const total = subtotal - discount + shipping;
@@ -576,7 +581,7 @@ function renderCartItems() {
 }
 
 // Controls, autoplay, and swipe transitions for the split hero slider
-function initializeHeroSlider() {
+window.initializeHeroSlider = function() {
   const slides = document.querySelectorAll(".hero-slide");
   const dots = document.querySelectorAll(".slider-dots .dot");
   const prevBtn = document.querySelector(".prev-slide");
@@ -679,3 +684,56 @@ function initializeHeroSlider() {
   // Initialize slider auto-rotation loop
   startAutoplay();
 }
+
+// 7. INJECT GOOGLE ANALYTICS & META PIXEL DYNAMICALLY
+function injectTrackingScripts() {
+  const settings = (window.CoorgDB && window.CoorgDB.getSettings()) || {};
+
+  // Meta Pixel
+  if (settings.meta_pixel_id) {
+    console.log(`📸 Injecting Meta Pixel: ${settings.meta_pixel_id}`);
+    !(function (f, b, e, v, n, t, s) {
+      if (f.fbq) return;
+      n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n;
+      n.push = n;
+      n.loaded = !0;
+      n.version = '2.0';
+      n.queue = [];
+      t = b.createElement(e);
+      t.async = !0;
+      t.src = v;
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    
+    fbq('init', settings.meta_pixel_id);
+    fbq('track', 'PageView');
+
+    // Noscript fallback
+    const noscript = document.createElement('noscript');
+    noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${settings.meta_pixel_id}&ev=PageView&noscript=1"/>`;
+    document.body.appendChild(noscript);
+  }
+
+  // Google Analytics
+  if (settings.google_analytics_id) {
+    const gaId = settings.google_analytics_id;
+    console.log(`📊 Injecting Google Analytics: ${gaId}`);
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(gaScript);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', gaId);
+  }
+}
+

@@ -580,6 +580,13 @@ async function createTables() {
       name VARCHAR(255) NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      setting_key VARCHAR(255) PRIMARY KEY,
+      setting_value TEXT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
 }
 
 async function seedDatabase() {
@@ -664,6 +671,38 @@ async function seedDatabase() {
       new Date().toLocaleString()
     ]);
   }
+
+  // Seed Default Settings
+  const [sets] = await db.query('SELECT COUNT(*) as count FROM settings');
+  if (sets[0].count === 0) {
+    console.log('🌱 Seeding default settings...');
+    const defaultSettings = [
+      { key: "delivery_charge", value: "50" },
+      { key: "cod_enabled", value: "true" },
+      { key: "google_analytics_id", value: "" },
+      { key: "google_merchant_id", value: "" },
+      { key: "meta_pixel_id", value: "" },
+      { key: "meta_api_key", value: "" },
+      { key: "delivery_partner_api", value: "" },
+      { key: "homepage_banners", value: JSON.stringify([
+        {
+          title: "From the Heart of Coorg to Your Home",
+          subtitle: "Premium organic spices, shade-grown Arabica coffees, and wellness products sourced directly from local farmers in the misty hills of Kodagu, Karnataka.",
+          image: "images/uploads/slide1.jpg",
+          linkText: "Shop Now"
+        },
+        {
+          title: "Authentic From Coorg: Pure Spices. Wild by Nature.",
+          subtitle: "Handpicked bold black pepper, aromatic cardamom, and wild forest cinnamon harvested using sustainable shade cultivation methods in Kodagu.",
+          image: "images/uploads/slide2.jpg",
+          linkText: "Shop Spices"
+        }
+      ])}
+    ];
+    for (const s of defaultSettings) {
+      await db.query('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)', [s.key, s.value]);
+    }
+  }
 }
 
 // REST API Endpoints
@@ -709,7 +748,13 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
       items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
     }));
 
-    res.json({ products, coupons, orders, logs: logsRows, categories: categoriesRows });
+    const [settingsRows] = await db.query('SELECT * FROM settings');
+    const settings = settingsRows.reduce((acc, curr) => {
+      acc[curr.setting_key] = curr.setting_value;
+      return acc;
+    }, {});
+
+    res.json({ products, coupons, orders, logs: logsRows, categories: categoriesRows, settings });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -915,6 +960,39 @@ app.post('/api/logs', checkDB, async (req, res) => {
   try {
     const { text, time } = req.body;
     await db.query('INSERT INTO activity_logs (text, time) VALUES (?, ?)', [text, time]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5.5. SETTINGS ENDPOINTS
+app.get('/api/settings', checkDB, async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM settings');
+    const settings = rows.reduce((acc, curr) => {
+      acc[curr.setting_key] = curr.setting_value;
+      return acc;
+    }, {});
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/settings', checkDB, async (req, res) => {
+  try {
+    const settings = req.body;
+    for (const key of Object.keys(settings)) {
+      let val = settings[key];
+      if (typeof val === 'object') {
+        val = JSON.stringify(val);
+      }
+      await db.query(
+        'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+        [key, String(val), String(val)]
+      );
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

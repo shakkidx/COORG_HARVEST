@@ -6,7 +6,8 @@
     coupons: [],
     orders: [],
     logs: [],
-    categories: []
+    categories: [],
+    settings: {}
   };
 
   let initPromise = null;
@@ -26,6 +27,7 @@
             cache.orders = data.orders || [];
             cache.logs = data.logs || [];
             cache.categories = data.categories || [];
+            cache.settings = data.settings || {};
             
             // Sync fallback storage
             localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
@@ -33,6 +35,7 @@
             localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
             localStorage.setItem("coorg_harvest_activity_logs", JSON.stringify(cache.logs));
             localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
+            localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
             
             console.log("🌿 CoorgDB: Sync with Hostinger MySQL Database completed successfully.");
           })
@@ -68,6 +71,16 @@
               { id: "wellness-products", name: "Wellness Products" },
               { id: "coorg-specialties", name: "Coorg Specialties" }
             ];
+            cache.settings = JSON.parse(localStorage.getItem("coorg_harvest_settings")) || {
+              delivery_charge: "50",
+              cod_enabled: "true",
+              google_analytics_id: "",
+              google_merchant_id: "",
+              meta_pixel_id: "",
+              meta_api_key: "",
+              delivery_partner_api: "",
+              homepage_banners: "[]"
+            };
 
             // Seed fallback storage so subsequent visits are fast and fully loaded
             localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
@@ -75,6 +88,7 @@
             localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
             localStorage.setItem("coorg_harvest_activity_logs", JSON.stringify(cache.logs));
             localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
+            localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
           });
       }
       return initPromise;
@@ -399,6 +413,26 @@
         });
       } catch (err) {
         console.error("Error deleting category from server database:", err);
+      }
+    },
+
+    // 8. SETTINGS CRUD
+    getSettings: function() {
+      return cache.settings;
+    },
+    updateSettings: async function(settingsObj) {
+      cache.settings = { ...cache.settings, ...settingsObj };
+      localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
+      await this.logActivity("Updated store settings and configurations.");
+      
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settingsObj)
+        });
+      } catch (err) {
+        console.error("Error saving settings to server database:", err);
       }
     }
   };

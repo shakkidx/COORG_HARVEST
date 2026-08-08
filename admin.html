@@ -54,6 +54,9 @@
         <a href="#" class="admin-menu-item" data-view="coupons-view">
           <i class="fa-solid fa-ticket"></i> Coupon Manager
         </a>
+        <a href="#" class="admin-menu-item" data-view="settings-view">
+          <i class="fa-solid fa-gears"></i> Settings
+        </a>
         <a href="#" class="admin-menu-item" id="admin-logout-btn" style="color: #E74C3C;">
           <i class="fa-solid fa-power-off"></i> Log Out Session
         </a>
@@ -294,6 +297,73 @@
             </div>
           </div>
 
+      <!-- VIEW 6: SETTINGS VIEW -->
+      <div class="admin-view-tab" id="settings-view" style="display:none;">
+        <div class="admin-charts-grid" style="grid-template-columns: 1fr 1fr; gap: 30px;">
+          <!-- Column 1: General and APIs -->
+          <div style="display: flex; flex-direction: column; gap: 30px;">
+            
+            <!-- Shipping & COD Settings -->
+            <div class="admin-data-card" style="padding: 25px;">
+              <h3>Delivery & Payment Settings</h3>
+              <form id="admin-shipping-settings-form" onsubmit="saveShippingSettings(event)" style="margin-top:20px; display:flex; flex-direction:column; gap:15px;">
+                <div class="form-group">
+                  <label>Delivery Charge (₹ INR)</label>
+                  <input type="number" id="setting-delivery-charge" class="form-control" placeholder="50" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label>Cash on Delivery (COD)</label>
+                  <select id="setting-cod-enabled" class="form-control">
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Delivery Settings <i class="fa-solid fa-floppy-disk"></i></button>
+              </form>
+            </div>
+
+            <!-- Integration Settings -->
+            <div class="admin-data-card" style="padding: 25px;">
+              <h3>SEO & Tracking Integrations</h3>
+              <form id="admin-integrations-settings-form" onsubmit="saveIntegrationSettings(event)" style="margin-top:20px; display:flex; flex-direction:column; gap:15px;">
+                <div class="form-group">
+                  <label>Google Analytics ID (G-XXXXX)</label>
+                  <input type="text" id="setting-google-analytics-id" class="form-control" placeholder="G-XXXXXXXXXX">
+                </div>
+                <div class="form-group">
+                  <label>Google Merchant ID</label>
+                  <input type="text" id="setting-google-merchant-id" class="form-control" placeholder="Merchant ID">
+                </div>
+                <div class="form-group">
+                  <label>Meta Pixel ID</label>
+                  <input type="text" id="setting-meta-pixel-id" class="form-control" placeholder="Meta Pixel ID">
+                </div>
+                <div class="form-group">
+                  <label>Meta API Token / Integration Key</label>
+                  <input type="password" id="setting-meta-api-key" class="form-control" placeholder="API Key">
+                </div>
+                <div class="form-group">
+                  <label>Delivery Partner API (e.g., Shiprocket)</label>
+                  <input type="text" id="setting-delivery-partner-api" class="form-control" placeholder="API endpoint / credentials">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Integrations <i class="fa-solid fa-floppy-disk"></i></button>
+              </form>
+            </div>
+
+          </div>
+
+          <!-- Column 2: Banner Manager -->
+          <div class="admin-data-card" style="padding: 25px;">
+            <h3>Homepage Banner Slides</h3>
+            <p style="font-size:0.8rem; color:var(--medium-gray); margin-top:5px; margin-bottom:15px;">Configure the rotating sliders displayed on your homepage. Max 3 slides recommended.</p>
+            
+            <div id="banners-manager-container" style="display:flex; flex-direction:column; gap:25px;">
+              <!-- Dynamically populated banner slide forms -->
+            </div>
+            
+            <button onclick="saveBannersSettings()" class="btn btn-primary" style="width:100%; margin-top:20px;">Save Homepage Banners <i class="fa-solid fa-floppy-disk"></i></button>
+          </div>
+
         </div>
       </div>
 
@@ -325,10 +395,14 @@
             </div>
           </div>
 
-          <div class="form-row-2">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div class="form-group">
-              <label for="crud-price">Price (₹ INR)</label>
+              <label for="crud-price">Sale Price (₹ INR)</label>
               <input type="number" id="crud-price" class="form-control" min="1" placeholder="280" required>
+            </div>
+            <div class="form-group">
+              <label for="crud-old-price">Original Price (₹ INR)</label>
+              <input type="number" id="crud-old-price" class="form-control" placeholder="350">
             </div>
             <div class="form-group">
               <label for="crud-stock">Stock Quantity</label>
