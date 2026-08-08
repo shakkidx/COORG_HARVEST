@@ -263,6 +263,7 @@ window.openAddProductModal = function() {
   document.getElementById("crud-image").value = "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=600&q=80";
 
   resetUploadStatus();
+  window.renderGalleryImages([]);
   document.getElementById("product-modal-overlay").classList.add("active");
 };
 
@@ -286,6 +287,7 @@ window.openEditProductModal = function(id) {
   document.getElementById("crud-usage").value = p.usage;
 
   resetUploadStatus();
+  window.renderGalleryImages(p.images);
   document.getElementById("product-modal-overlay").classList.add("active");
 };
 
@@ -312,12 +314,15 @@ window.saveProductCrudForm = async function() {
   const benefits = document.getElementById("crud-benefits").value.split(",").map(b => b.trim());
   const usage = document.getElementById("crud-usage").value.trim();
 
+  const galleryImages = Array.from(document.querySelectorAll(".gallery-image-url")).map(input => input.value.trim()).filter(val => val !== "");
+
   if (id) {
     // Modify Edit mode
     const oldProduct = window.CoorgDB.getProductById(id);
     const updated = {
       ...oldProduct,
-      name, category, price, oldPrice, stock, image, description, origin, ingredients, benefits, usage
+      name, category, price, oldPrice, stock, image, description, origin, ingredients, benefits, usage,
+      images: galleryImages
     };
     await window.CoorgDB.updateProduct(updated);
   } else {
@@ -329,7 +334,8 @@ window.saveProductCrudForm = async function() {
       rating: 5.0,
       ratingCount: 0,
       badge: "New Sourcing",
-      reviews: []
+      reviews: [],
+      images: galleryImages
     };
     await window.CoorgDB.addProduct(newProduct);
   }
@@ -1015,6 +1021,99 @@ function resetUploadStatus() {
   const fileInput = document.getElementById("crud-image-file");
   if (fileInput) fileInput.value = "";
 }
+
+// PRODUCT GALLERY IMAGES MANAGER
+window.renderGalleryImages = function(imagesList) {
+  const container = document.getElementById("gallery-images-list");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  let list = [];
+  try {
+    if (imagesList) {
+      list = typeof imagesList === 'string' ? JSON.parse(imagesList) : imagesList;
+    }
+  } catch (e) {
+    console.error("Error parsing product gallery images:", e);
+  }
+  
+  if (Array.isArray(list)) {
+    list.forEach(url => {
+      window.addGalleryImageSlot(url);
+    });
+  }
+};
+
+window.addGalleryImageSlot = function(value = "") {
+  const container = document.getElementById("gallery-images-list");
+  if (!container) return;
+  
+  const row = document.createElement("div");
+  row.className = "gallery-image-row";
+  row.style.display = "flex";
+  row.style.gap = "10px";
+  row.style.alignItems = "center";
+  
+  row.innerHTML = `
+    <input type="text" class="form-control gallery-image-url" value="${value}" placeholder="images/uploads/product-image.jpg" style="flex: 1;">
+    <label class="btn btn-secondary" style="margin: 0; padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 0.85rem; border-radius: 4px; border: 1px solid var(--light-gray);">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+      <input type="file" accept="image/*" style="display: none;" onchange="window.handleGalleryFileUpload(this)">
+    </label>
+    <button type="button" class="btn btn-outline" style="padding: 10px; border-radius: 4px; border: 1px solid var(--light-gray); color: #B03232; cursor: pointer;" onclick="this.closest('.gallery-image-row').remove()">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(row);
+};
+
+window.handleGalleryFileUpload = async function(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const row = fileInput.closest(".gallery-image-row");
+  const urlInput = row.querySelector(".gallery-image-url");
+  const uploadBtn = fileInput.closest("label");
+
+  uploadBtn.style.pointerEvents = "none";
+  uploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading...`;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) throw new Error("Upload failed");
+
+    const data = await res.json();
+    urlInput.value = data.url;
+    uploadBtn.innerHTML = `<i class="fa-solid fa-check" style="color:#2E5E3E;"></i> Done`;
+    
+    // Log audit trail
+    await window.CoorgDB.logActivity(`Uploaded product gallery image: ${file.name}`);
+  } catch (err) {
+    console.warn("Gallery server uploader failed, falling back to Base64:", err.message);
+    
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      urlInput.value = evt.target.result;
+      uploadBtn.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color:#C5A059;"></i> Offline`;
+    };
+    reader.readAsDataURL(file);
+  } finally {
+    setTimeout(() => {
+      uploadBtn.style.pointerEvents = "auto";
+      uploadBtn.innerHTML = `
+        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+        <input type="file" accept="image/*" style="display: none;" onchange="window.handleGalleryFileUpload(this)">
+      `;
+    }, 2000);
+  }
+};
 
 // DYNAMIC CATEGORY DROPDOWN POPULATION FOR PRODUCT MODAL
 function populateCategoryDropdown() {

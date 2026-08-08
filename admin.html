@@ -427,6 +427,16 @@
             </div>
             <small style="color: var(--medium-gray); margin-top: 4px; display: block;" id="upload-status-msg">Provide a direct image URL or upload a local file.</small>
           </div>
+ 
+          <div class="form-group" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="margin: 0; font-weight: 600;">Product Gallery Images (Additional)</label>
+              <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--primary-green); color: var(--primary-green); background: none; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="window.addGalleryImageSlot()">
+                <i class="fa-solid fa-plus"></i> Add Image
+              </button>
+            </div>
+            <div id="gallery-images-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+          </div>
 
           <div class="form-group">
             <label for="crud-desc">Long Description</label>
