@@ -459,7 +459,7 @@ async function initDatabase() {
   let host = process.env.DB_HOST || 'localhost';
   let port = parseInt(process.env.DB_PORT || '3306');
   const user = process.env.DB_USER || 'u279206464_coorgharvest';
-  const password = process.env.DB_PASSWORD || '';
+  const password = process.env.DB_PASSWORD || 'Coorgharvest4%';
   const database = process.env.DB_NAME || 'u279206464_coorgharvest';
 
   try {
@@ -682,7 +682,7 @@ async function seedDatabase() {
       { key: "cod_enabled", value: "true" },
       { key: "google_analytics_id", value: "" },
       { key: "google_merchant_id", value: "" },
-      { key: "meta_pixel_id", value: "" },
+      { key: "meta_pixel_id", value: "1287784843269311" },
       { key: "meta_api_key", value: "" },
       { key: "delivery_partner_api", value: "" },
       { key: "homepage_banners", value: JSON.stringify([
