@@ -610,12 +610,6 @@ async function seedDatabase() {
   // Seed Products
   console.log('🌱 Checking catalog products seeding...');
   
-  // Clean up any old products from the database that are not in our seedProducts list
-  const seedIds = seedProducts.map(p => p.id);
-  if (seedIds.length > 0) {
-    await db.query('DELETE FROM products WHERE id NOT IN (?)', [seedIds]);
-  }
-
   for (const p of seedProducts) {
     const [exists] = await db.query('SELECT id FROM products WHERE id = ?', [p.id]);
     if (exists.length === 0) {
