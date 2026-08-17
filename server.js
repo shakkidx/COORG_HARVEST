@@ -49,7 +49,8 @@ app.use(express.json());
 // Serve static assets from the current directory
 app.use(express.static(path.join(__dirname)));
 
-// Fallback: Also serve uploads from the persistent uploads folder
+// Serve uploads from local uploads (repository defaults) first, then fallback to persistent uploads
+app.use('/images/uploads', express.static(localUploadDir));
 app.use('/images/uploads', express.static(persistentUploadDir));
 
 // Global Database Pool and SSH Tunnel variables
