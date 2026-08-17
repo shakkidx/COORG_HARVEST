@@ -1394,6 +1394,11 @@ window.openManualOrderModal = function() {
   // Hide coupon discount row
   document.getElementById("manual-row-discount").style.display = "none";
   
+  // Set default discount state
+  document.getElementById("manual-discount-type").value = "none";
+  document.getElementById("manual-discount-value").value = "";
+  window.toggleManualDiscountFields();
+  
   // Populate products select
   const productSelect = document.getElementById("manual-product-select");
   if (productSelect) {
@@ -1411,6 +1416,26 @@ window.openManualOrderModal = function() {
   
   // Open the modal overlay
   document.getElementById("manual-order-modal-overlay").classList.add("active");
+};
+
+window.toggleManualDiscountFields = function() {
+  const type = document.getElementById("manual-discount-type").value;
+  const couponRow = document.getElementById("manual-coupon-row");
+  const valGroup = document.getElementById("manual-discount-val-group");
+  const valLabel = document.getElementById("manual-discount-val-label");
+  
+  if (type === "coupon") {
+    couponRow.style.display = "flex";
+    valGroup.style.display = "none";
+  } else if (type === "none") {
+    couponRow.style.display = "none";
+    valGroup.style.display = "none";
+    document.getElementById("manual-discount-value").value = "";
+  } else {
+    couponRow.style.display = "none";
+    valGroup.style.display = "block";
+    valLabel.textContent = type === "percent" ? "Percentage (%)" : "Flat Amount (₹)";
+  }
 };
 
 window.closeManualOrderModal = function() {
@@ -1520,22 +1545,40 @@ function recalculateManualOrderTotals() {
   
   // Calculate discount
   let discount = 0;
-  if (manualOrderAppliedCoupon) {
-    const rowDiscount = document.getElementById("manual-row-discount");
-    if (rowDiscount) rowDiscount.style.display = "flex";
-    
+  const discountType = document.getElementById("manual-discount-type").value;
+  const discountVal = parseFloat(document.getElementById("manual-discount-value").value) || 0;
+  
+  const rowDiscount = document.getElementById("manual-row-discount");
+  const labelDiscount = document.getElementById("manual-lbl-discount");
+  
+  if (discountType === "percent") {
+    discount = subtotal * (discountVal / 100);
+    if (rowDiscount) {
+      rowDiscount.style.display = "flex";
+      rowDiscount.querySelector("span").textContent = `Manual Discount (${discountVal}%):`;
+    }
+  } else if (discountType === "fixed") {
+    discount = discountVal;
+    if (rowDiscount) {
+      rowDiscount.style.display = "flex";
+      rowDiscount.querySelector("span").textContent = "Manual Discount:";
+    }
+  } else if (discountType === "coupon" && manualOrderAppliedCoupon) {
+    if (rowDiscount) {
+      rowDiscount.style.display = "flex";
+      rowDiscount.querySelector("span").textContent = "Coupon Discount:";
+    }
     if (manualOrderAppliedCoupon.type === "percent") {
       discount = subtotal * (parseFloat(manualOrderAppliedCoupon.value) / 100);
     } else if (manualOrderAppliedCoupon.type === "fixed") {
       discount = parseFloat(manualOrderAppliedCoupon.value);
     }
-    
-    // Ensure discount is not greater than subtotal
-    discount = Math.min(discount, subtotal);
   } else {
-    const rowDiscount = document.getElementById("manual-row-discount");
     if (rowDiscount) rowDiscount.style.display = "none";
   }
+  
+  // Ensure discount is not greater than subtotal
+  discount = Math.min(discount, subtotal);
   
   // Delivery settings
   const settings = window.CoorgDB.getSettings() || {};
@@ -1551,7 +1594,7 @@ function recalculateManualOrderTotals() {
   
   // Update Labels
   document.getElementById("manual-lbl-subtotal").textContent = `₹${subtotal.toFixed(2)}`;
-  document.getElementById("manual-lbl-discount").textContent = `-₹${discount.toFixed(2)}`;
+  if (labelDiscount) labelDiscount.textContent = `-₹${discount.toFixed(2)}`;
   document.getElementById("manual-lbl-shipping").textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
   document.getElementById("manual-lbl-total").textContent = `₹${total.toFixed(2)}`;
 }
@@ -1562,8 +1605,8 @@ window.saveManualOrder = async function() {
   const email = document.getElementById("manual-cust-email").value.trim();
   const address = document.getElementById("manual-cust-address").value.trim();
   
-  if (!name || !phone || !email || !address) {
-    alert("Please fill out all customer detail fields.");
+  if (!name || !phone || !address) {
+    alert("Please fill out all required customer detail fields.");
     return;
   }
   
@@ -1574,15 +1617,23 @@ window.saveManualOrder = async function() {
   
   // Compute totals final check
   const subtotal = manualOrderItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  
   let discount = 0;
-  if (manualOrderAppliedCoupon) {
+  const discountType = document.getElementById("manual-discount-type").value;
+  const discountVal = parseFloat(document.getElementById("manual-discount-value").value) || 0;
+  
+  if (discountType === "percent") {
+    discount = subtotal * (discountVal / 100);
+  } else if (discountType === "fixed") {
+    discount = discountVal;
+  } else if (discountType === "coupon" && manualOrderAppliedCoupon) {
     if (manualOrderAppliedCoupon.type === "percent") {
       discount = subtotal * (parseFloat(manualOrderAppliedCoupon.value) / 100);
     } else if (manualOrderAppliedCoupon.type === "fixed") {
       discount = parseFloat(manualOrderAppliedCoupon.value);
     }
-    discount = Math.min(discount, subtotal);
   }
+  discount = Math.min(discount, subtotal);
   
   const settings = window.CoorgDB.getSettings() || {};
   const deliveryCharge = parseFloat(settings.delivery_charge || "50");
@@ -1614,7 +1665,7 @@ window.saveManualOrder = async function() {
     date: dateFormatted,
     name: name,
     phone: phone,
-    email: email,
+    email: email || "", // Make email optional, use empty string if not provided
     address: address,
     items: manualOrderItems,
     subtotal: subtotal,
@@ -1624,7 +1675,7 @@ window.saveManualOrder = async function() {
     paymentMethod: paymentMethod,
     status: status,
     trackingId: "",
-    couponCode: manualOrderAppliedCoupon ? manualOrderAppliedCoupon.code : null
+    couponCode: discountType === "coupon" && manualOrderAppliedCoupon ? manualOrderAppliedCoupon.code : (discountType !== "none" ? "MANUAL" : null)
   };
   
   try {

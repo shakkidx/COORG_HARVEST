@@ -506,8 +506,8 @@
                   <input type="tel" id="manual-cust-phone" class="form-control" placeholder="E.g., +91 9876543210" required>
                 </div>
                 <div class="form-group">
-                  <label for="manual-cust-email">Email Address</label>
-                  <input type="email" id="manual-cust-email" class="form-control" placeholder="E.g., john@example.com" required>
+                  <label for="manual-cust-email">Email Address (Optional)</label>
+                  <input type="email" id="manual-cust-email" class="form-control" placeholder="E.g., john@example.com">
                 </div>
               </div>
               <div class="form-group">
@@ -564,8 +564,25 @@
                   <strong id="manual-lbl-subtotal">₹0.00</strong>
                 </div>
                 
+                <!-- Discount Row -->
+                <div class="form-row-2" style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; margin-bottom: 8px;">
+                  <div class="form-group" style="margin: 0;">
+                    <label for="manual-discount-type" style="font-size: 0.8rem; margin-bottom: 2px;">Discount Type</label>
+                    <select id="manual-discount-type" class="form-control" style="padding: 6px; font-size: 0.8rem; border-color: var(--light-gray);" onchange="toggleManualDiscountFields(); recalculateManualOrderTotals();">
+                      <option value="none">No Discount</option>
+                      <option value="percent">Percentage (%)</option>
+                      <option value="fixed">Fixed Flat (₹)</option>
+                      <option value="coupon">Apply Promo Coupon</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin: 0;" id="manual-discount-val-group">
+                    <label for="manual-discount-value" style="font-size: 0.8rem; margin-bottom: 2px;" id="manual-discount-val-label">Value</label>
+                    <input type="number" id="manual-discount-value" class="form-control" placeholder="0" min="0" style="padding: 6px; font-size: 0.8rem; height: auto;" oninput="recalculateManualOrderTotals()">
+                  </div>
+                </div>
+
                 <!-- Coupon row -->
-                <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                <div id="manual-coupon-row" style="display: none; gap: 8px; margin-bottom: 8px; align-items: center;">
                   <input type="text" id="manual-coupon-code" class="form-control" placeholder="Promo Coupon..." style="padding: 6px 10px; font-size: 0.8rem; height: auto; text-transform: uppercase;">
                   <button type="button" class="btn btn-secondary" onclick="applyManualOrderCoupon()" style="padding: 6px 12px; font-size: 0.8rem;">Apply</button>
                 </div>
