@@ -589,27 +589,37 @@ window.adminDownloadInvoice = async function(id) {
   doc.text(`Rs. ${order.total.toFixed(2)}`, 172, currentY + 3);
   currentY += 10;
 
+  const codDeposit = order.codDeposit !== undefined ? order.codDeposit : (order.couponCode === "MANUAL" ? 0 : 50);
   if (order.paymentMethod.toUpperCase() === 'COD') {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(29, 29, 29);
-    doc.text("COD Deposit Paid (Online):", 125, currentY);
-    doc.text(`-Rs. 50.00`, 172, currentY);
-    currentY += 6;
-    
-    doc.line(125, currentY - 2, 195, currentY - 2);
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(180, 50, 50);
-    doc.text("Balance Due on Delivery:", 125, currentY + 3);
-    doc.text(`Rs. ${(order.total - 50).toFixed(2)}`, 172, currentY + 3);
-    currentY += 12;
+    if (codDeposit > 0) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(29, 29, 29);
+      doc.text("COD Deposit Paid (Online):", 125, currentY);
+      doc.text(`-Rs. ${codDeposit.toFixed(2)}`, 172, currentY);
+      currentY += 6;
+      
+      doc.line(125, currentY - 2, 195, currentY - 2);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(180, 50, 50);
+      doc.text("Balance Due on Delivery:", 125, currentY + 3);
+      doc.text(`Rs. ${(order.total - codDeposit).toFixed(2)}`, 172, currentY + 3);
+      currentY += 12;
 
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(7.5);
-    doc.setTextColor(150, 50, 50);
-    doc.text("*Note: Online COD deposit of Rs. 50.00 is non-refundable.", 15, currentY - 12);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(150, 50, 50);
+      doc.text(`*Note: Online COD deposit of Rs. ${codDeposit.toFixed(2)} is non-refundable.`, 15, currentY - 12);
+    } else {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(180, 50, 50);
+      doc.text("Balance Due on Delivery:", 125, currentY + 3);
+      doc.text(`Rs. ${order.total.toFixed(2)}`, 172, currentY + 3);
+      currentY += 12;
+    }
   }
 
   // VERIFIED BADGE (NO GSTIN)
@@ -1399,6 +1409,10 @@ window.openManualOrderModal = function() {
   document.getElementById("manual-discount-value").value = "";
   window.toggleManualDiscountFields();
   
+  // Set default COD Deposit checkbox state
+  document.getElementById("manual-cod-deposit").checked = false;
+  window.toggleManualCodDepositRow();
+  
   // Populate products select
   const productSelect = document.getElementById("manual-product-select");
   if (productSelect) {
@@ -1416,6 +1430,19 @@ window.openManualOrderModal = function() {
   
   // Open the modal overlay
   document.getElementById("manual-order-modal-overlay").classList.add("active");
+};
+
+window.toggleManualCodDepositRow = function() {
+  const method = document.getElementById("manual-payment-method").value;
+  const depositGroup = document.getElementById("manual-cod-deposit-group");
+  if (depositGroup) {
+    if (method === "COD") {
+      depositGroup.style.display = "flex";
+    } else {
+      depositGroup.style.display = "none";
+      document.getElementById("manual-cod-deposit").checked = false;
+    }
+  }
 };
 
 window.toggleManualDiscountFields = function() {
@@ -1675,7 +1702,8 @@ window.saveManualOrder = async function() {
     paymentMethod: paymentMethod,
     status: status,
     trackingId: "",
-    couponCode: discountType === "coupon" && manualOrderAppliedCoupon ? manualOrderAppliedCoupon.code : (discountType !== "none" ? "MANUAL" : null)
+    couponCode: discountType === "coupon" && manualOrderAppliedCoupon ? manualOrderAppliedCoupon.code : (discountType !== "none" ? "MANUAL" : null),
+    codDeposit: (paymentMethod.toUpperCase() === 'COD' && document.getElementById("manual-cod-deposit").checked) ? 50 : 0
   };
   
   try {
