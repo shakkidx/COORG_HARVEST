@@ -13,16 +13,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, 'images', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Define local and persistent upload directories
+const localUploadDir = path.join(__dirname, 'images', 'uploads');
+const persistentUploadDir = path.join(__dirname, '..', 'persistent_uploads');
+
+// Ensure both directories exist
+if (!fs.existsSync(localUploadDir)) {
+  fs.mkdirSync(localUploadDir, { recursive: true });
+}
+if (!fs.existsSync(persistentUploadDir)) {
+  fs.mkdirSync(persistentUploadDir, { recursive: true });
 }
 
-// Multer Storage Configuration for Local Uploads
+// Multer Storage Configuration (saves to the persistent uploads directory)
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, uploadDir);
+    cb(null, persistentUploadDir);
   },
   filename: function(req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -37,6 +43,9 @@ app.use(express.json());
 
 // Serve static assets from the current directory
 app.use(express.static(path.join(__dirname)));
+
+// Fallback: Also serve uploads from the persistent uploads folder
+app.use('/images/uploads', express.static(persistentUploadDir));
 
 // Global Database Pool and SSH Tunnel variables
 let db = null;
