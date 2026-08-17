@@ -146,7 +146,9 @@ function setupTabSwitches() {
         renderProductsTable();
       } else if (targetView === "orders-view") {
         viewTitle.textContent = "Orders Ledger Log";
-        headerBtn.style.display = "none";
+        headerBtn.style.display = "inline-flex";
+        headerBtn.innerHTML = `Create Manual Order <i class="fa-solid fa-plus"></i>`;
+        headerBtn.setAttribute("onclick", "openManualOrderModal()");
         renderOrdersTable();
       } else if (targetView === "coupons-view") {
         viewTitle.textContent = "Discount Coupons Control";
@@ -1362,4 +1364,275 @@ window.saveBannersSettings = async function() {
 
   await window.CoorgDB.updateSettings({ homepage_banners: JSON.stringify(banners) });
   alert("✅ Homepage banners saved successfully!");
+}
+
+// ==========================================
+// MANUAL ORDER CONTROLLERS & EVENT HANDLERS
+// ==========================================
+
+let manualOrderItems = [];
+let manualOrderAppliedCoupon = null;
+
+window.openManualOrderModal = function() {
+  manualOrderItems = [];
+  manualOrderAppliedCoupon = null;
+  
+  // Reset form inputs
+  document.getElementById("manual-order-form").reset();
+  
+  // Hide coupon discount row
+  document.getElementById("manual-row-discount").style.display = "none";
+  
+  // Populate products select
+  const productSelect = document.getElementById("manual-product-select");
+  if (productSelect) {
+    const products = window.CoorgDB.getProducts();
+    // Sort products alphabetically
+    const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
+    productSelect.innerHTML = sortedProducts.map(p => 
+      `<option value="${p.id}" data-price="${p.price}" data-name="${p.name}" data-category="${p.category}">${p.name} - ₹${p.price} (${p.stock} in stock)</option>`
+    ).join('');
+  }
+  
+  // Render empty items list & recalculate
+  renderManualOrderItemsList();
+  recalculateManualOrderTotals();
+  
+  // Open the modal overlay
+  document.getElementById("manual-order-modal-overlay").classList.add("active");
+};
+
+window.closeManualOrderModal = function() {
+  document.getElementById("manual-order-modal-overlay").classList.remove("active");
+};
+
+window.addManualOrderItem = function() {
+  const select = document.getElementById("manual-product-select");
+  if (!select || select.options.length === 0) return;
+  
+  const selectedOption = select.options[select.selectedIndex];
+  const productId = selectedOption.value;
+  const name = selectedOption.getAttribute("data-name");
+  const price = parseFloat(selectedOption.getAttribute("data-price"));
+  const category = selectedOption.getAttribute("data-category");
+  
+  // Check if item already in manualOrderItems
+  const existingItem = manualOrderItems.find(item => item.id === productId);
+  if (existingItem) {
+    existingItem.qty += 1;
+  } else {
+    manualOrderItems.push({
+      id: productId,
+      name: name,
+      price: price,
+      category: category,
+      qty: 1
+    });
+  }
+  
+  renderManualOrderItemsList();
+  recalculateManualOrderTotals();
+};
+
+window.removeManualOrderItem = function(productId) {
+  manualOrderItems = manualOrderItems.filter(item => item.id !== productId);
+  renderManualOrderItemsList();
+  recalculateManualOrderTotals();
+};
+
+window.updateManualOrderQty = function(productId, qty) {
+  const qtyNum = parseInt(qty);
+  if (isNaN(qtyNum) || qtyNum <= 0) {
+    window.removeManualOrderItem(productId);
+    return;
+  }
+  
+  const item = manualOrderItems.find(item => item.id === productId);
+  if (item) {
+    item.qty = qtyNum;
+  }
+  
+  recalculateManualOrderTotals();
+};
+
+window.applyManualOrderCoupon = function() {
+  const codeInput = document.getElementById("manual-coupon-code");
+  if (!codeInput) return;
+  
+  const code = codeInput.value.trim();
+  if (!code) {
+    alert("Please enter a coupon code.");
+    return;
+  }
+  
+  const coupon = window.CoorgDB.validateCoupon(code);
+  if (!coupon) {
+    alert("Invalid coupon code.");
+    manualOrderAppliedCoupon = null;
+    document.getElementById("manual-row-discount").style.display = "none";
+    recalculateManualOrderTotals();
+    return;
+  }
+  
+  manualOrderAppliedCoupon = coupon;
+  alert(`Coupon Applied: ${coupon.description}`);
+  recalculateManualOrderTotals();
+};
+
+function renderManualOrderItemsList() {
+  const listContainer = document.getElementById("manual-items-list");
+  if (!listContainer) return;
+  
+  if (manualOrderItems.length === 0) {
+    listContainer.innerHTML = `<div style="text-align: center; color: var(--medium-gray); padding: 20px;">No items added to this order.</div>`;
+    return;
+  }
+  
+  listContainer.innerHTML = manualOrderItems.map(item => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--light-gray);">
+      <div style="flex: 1; padding-right: 10px;">
+        <div style="font-weight: 600; color: var(--primary-green); font-size: 0.85rem;">${item.name}</div>
+        <div style="font-size: 0.75rem; color: var(--medium-gray);">₹${item.price} each</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="number" value="${item.qty}" min="1" onchange="updateManualOrderQty('${item.id}', this.value)" style="width: 50px; padding: 4px; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--light-gray); text-align: center;">
+        <button type="button" onclick="removeManualOrderItem('${item.id}')" style="background: none; border: none; color: var(--red); cursor: pointer; padding: 4px;" title="Remove Item">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function recalculateManualOrderTotals() {
+  const subtotal = manualOrderItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  
+  // Calculate discount
+  let discount = 0;
+  if (manualOrderAppliedCoupon) {
+    const rowDiscount = document.getElementById("manual-row-discount");
+    if (rowDiscount) rowDiscount.style.display = "flex";
+    
+    if (manualOrderAppliedCoupon.type === "percent") {
+      discount = subtotal * (parseFloat(manualOrderAppliedCoupon.value) / 100);
+    } else if (manualOrderAppliedCoupon.type === "fixed") {
+      discount = parseFloat(manualOrderAppliedCoupon.value);
+    }
+    
+    // Ensure discount is not greater than subtotal
+    discount = Math.min(discount, subtotal);
+  } else {
+    const rowDiscount = document.getElementById("manual-row-discount");
+    if (rowDiscount) rowDiscount.style.display = "none";
+  }
+  
+  // Delivery settings
+  const settings = window.CoorgDB.getSettings() || {};
+  const deliveryCharge = parseFloat(settings.delivery_charge || "50");
+  const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
+  
+  let shipping = 0;
+  if (subtotal > 0) {
+    shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
+  }
+  
+  const total = Math.max(0, subtotal - discount + shipping);
+  
+  // Update Labels
+  document.getElementById("manual-lbl-subtotal").textContent = `₹${subtotal.toFixed(2)}`;
+  document.getElementById("manual-lbl-discount").textContent = `-₹${discount.toFixed(2)}`;
+  document.getElementById("manual-lbl-shipping").textContent = shipping === 0 ? "FREE" : `₹${shipping.toFixed(2)}`;
+  document.getElementById("manual-lbl-total").textContent = `₹${total.toFixed(2)}`;
+}
+
+window.saveManualOrder = async function() {
+  const name = document.getElementById("manual-cust-name").value.trim();
+  const phone = document.getElementById("manual-cust-phone").value.trim();
+  const email = document.getElementById("manual-cust-email").value.trim();
+  const address = document.getElementById("manual-cust-address").value.trim();
+  
+  if (!name || !phone || !email || !address) {
+    alert("Please fill out all customer detail fields.");
+    return;
+  }
+  
+  if (manualOrderItems.length === 0) {
+    alert("Please add at least one product to the order.");
+    return;
+  }
+  
+  // Compute totals final check
+  const subtotal = manualOrderItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  let discount = 0;
+  if (manualOrderAppliedCoupon) {
+    if (manualOrderAppliedCoupon.type === "percent") {
+      discount = subtotal * (parseFloat(manualOrderAppliedCoupon.value) / 100);
+    } else if (manualOrderAppliedCoupon.type === "fixed") {
+      discount = parseFloat(manualOrderAppliedCoupon.value);
+    }
+    discount = Math.min(discount, subtotal);
+  }
+  
+  const settings = window.CoorgDB.getSettings() || {};
+  const deliveryCharge = parseFloat(settings.delivery_charge || "50");
+  const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
+  const shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
+  const total = Math.max(0, subtotal - discount + shipping);
+  
+  const paymentMethod = document.getElementById("manual-payment-method").value;
+  const status = document.getElementById("manual-order-status").value;
+  
+  // Format order date: "YYYY-MM-DD, HH:MM AM/PM"
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  let hours = now.getHours();
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  const hoursStr = String(hours).padStart(2, '0');
+  const dateFormatted = `${year}-${month}-${day}, ${hoursStr}:${minutes} ${ampm}`;
+  
+  // Generate random order ID
+  const orderId = `CH-${year}-${Math.floor(1000 + Math.random() * 9000)}`;
+  
+  const orderDetails = {
+    id: orderId,
+    date: dateFormatted,
+    name: name,
+    phone: phone,
+    email: email,
+    address: address,
+    items: manualOrderItems,
+    subtotal: subtotal,
+    discount: discount,
+    shipping: shipping,
+    total: total,
+    paymentMethod: paymentMethod,
+    status: status,
+    trackingId: "",
+    couponCode: manualOrderAppliedCoupon ? manualOrderAppliedCoupon.code : null
+  };
+  
+  try {
+    // Save to database
+    await window.CoorgDB.placeOrder(orderDetails);
+    
+    // Automatically trigger downloads
+    await window.adminDownloadInvoice(orderId);
+    await window.adminDownloadDeliverySlip(orderId);
+    
+    alert(`🎉 Order ${orderId} placed successfully! Invoice and delivery slip have been downloaded.`);
+    
+    // Close modal, refresh
+    closeManualOrderModal();
+    renderOrdersTable();
+    loadAnalytics();
+    renderActivityLogsList();
+  } catch (err) {
+    console.error("Failed to save manual order:", err);
+    alert("Failed to place order. Please check the console logs.");
+  }
 };

@@ -474,6 +474,124 @@
     </div>
   </div>
 
+  <!-- MANUAL ORDER EDIT / ADD MODAL FORM -->
+  <div class="admin-modal-overlay" id="manual-order-modal-overlay">
+    <div class="admin-modal" style="max-width: 850px; width: 90%;">
+      <div class="admin-modal-header">
+        <h3>Create Manual Order</h3>
+        <button class="admin-modal-close" onclick="closeManualOrderModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body">
+        <form id="manual-order-form" onsubmit="event.preventDefault();">
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <!-- Customer Information Card -->
+            <div style="border-right: 1px solid var(--light-gray); padding-right: 20px;">
+              <h4 style="color: var(--primary-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-user"></i> Customer Details
+              </h4>
+              <div class="form-group">
+                <label for="manual-cust-name">Full Name</label>
+                <input type="text" id="manual-cust-name" class="form-control" placeholder="E.g., John Doe" required>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="manual-cust-phone">Phone Number</label>
+                  <input type="tel" id="manual-cust-phone" class="form-control" placeholder="E.g., +91 9876543210" required>
+                </div>
+                <div class="form-group">
+                  <label for="manual-cust-email">Email Address</label>
+                  <input type="email" id="manual-cust-email" class="form-control" placeholder="E.g., john@example.com" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="manual-cust-address">Shipping Address</label>
+                <textarea id="manual-cust-address" class="form-control" rows="3" placeholder="Full delivery address with ZIP/PIN Code..." required></textarea>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="manual-payment-method">Payment Method</label>
+                  <select id="manual-payment-method" class="form-control">
+                    <option value="UPI">UPI</option>
+                    <option value="CARD">Debit/Credit Card</option>
+                    <option value="COD" selected>Cash on Delivery (COD)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="manual-order-status">Order Status</label>
+                  <select id="manual-order-status" class="form-control">
+                    <option value="Paid">Paid / Verified</option>
+                    <option value="Pending COD" selected>Pending COD</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Items & Calculations Card -->
+            <div>
+              <h4 style="color: var(--primary-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-basket-shopping"></i> Order Items
+              </h4>
+              
+              <!-- Select Product Selector -->
+              <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-end;">
+                <div style="flex: 1; margin: 0;" class="form-group">
+                  <label for="manual-product-select">Select Product</label>
+                  <select id="manual-product-select" class="form-control" style="margin: 0;"></select>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addManualOrderItem()" style="padding: 10px 15px; height: 42px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                  Add <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+              
+              <!-- Added Items List -->
+              <div style="border: 1px solid var(--light-gray); border-radius: 6px; max-height: 180px; overflow-y: auto; padding: 10px; margin-bottom: 15px; background: #fafafa;" id="manual-items-list">
+                <!-- Dynamic Items -->
+              </div>
+              
+              <!-- Financial breakdown -->
+              <div style="background: rgba(46,94,62,0.05); padding: 12px; border-radius: 6px; font-size: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span>Subtotal:</span>
+                  <strong id="manual-lbl-subtotal">₹0.00</strong>
+                </div>
+                
+                <!-- Coupon row -->
+                <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                  <input type="text" id="manual-coupon-code" class="form-control" placeholder="Promo Coupon..." style="padding: 6px 10px; font-size: 0.8rem; height: auto; text-transform: uppercase;">
+                  <button type="button" class="btn btn-secondary" onclick="applyManualOrderCoupon()" style="padding: 6px 12px; font-size: 0.8rem;">Apply</button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--primary-green); display: none;" id="manual-row-discount">
+                  <span>Coupon Discount:</span>
+                  <strong id="manual-lbl-discount">-₹0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span>Delivery Charge:</span>
+                  <strong id="manual-lbl-shipping">₹0.00</strong>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--light-gray); margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: 700; color: var(--primary-green);">
+                  <span>Grand Total:</span>
+                  <strong id="manual-lbl-total">₹0.00</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </form>
+      </div>
+      
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closeManualOrderModal()" style="padding:10px 20px;">Cancel</button>
+        <button class="btn btn-primary" onclick="saveManualOrder()" style="padding:10px 20px; display: flex; align-items: center; gap: 8px;">Place Order & Download Documents <i class="fa-solid fa-file-arrow-down"></i></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Mobile Bottom Navigation Bar for Admin Tabs -->
   <nav class="admin-mobile-nav">
     <a href="#" class="admin-menu-item active" data-view="dashboard-view">
