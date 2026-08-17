@@ -801,11 +801,12 @@ window.adminDownloadDeliverySlip = async function(id) {
   doc.text(`Date: ${order.date.split(',')[0]}`, 0.25, 2.97);
   doc.text(`Tracking ID: ${order.trackingId}`, 0.25, 3.12);
 
+  const codDeposit = order.codDeposit !== undefined ? order.codDeposit : (order.couponCode === "MANUAL" ? 0 : 50);
   // Cash collect display (Outline box, white background)
   let collectAmount = 0;
   let statusText = "PAID ONLINE (PAID)";
   if (order.paymentMethod.toUpperCase() === 'COD') {
-    collectAmount = order.total - 50.00;
+    collectAmount = order.total - codDeposit;
     statusText = `CASH TO COLLECT (COD): INR ${collectAmount.toFixed(2)}`;
   }
 
