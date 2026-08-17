@@ -76,10 +76,15 @@
           <p style="font-size:0.85rem; color:var(--medium-gray);" id="admin-date-string">Thursday, June 18, 2026</p>
         </div>
         
-        <!-- Quick action button -->
-        <button class="btn btn-primary" id="admin-header-btn" onclick="openAddProductModal()">
-          Add New Product <i class="fa-solid fa-plus"></i>
-        </button>
+        <!-- Quick action buttons -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="btn btn-secondary" id="admin-header-btn-sec" onclick="openManualOrderModal()" style="display: inline-flex; height: 42px; align-items: center; justify-content: center; gap: 6px;">
+            Create Manual Order <i class="fa-solid fa-plus"></i>
+          </button>
+          <button class="btn btn-primary" id="admin-header-btn" onclick="openAddProductModal()" style="height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            Add New Product <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
       </div>
 
       <!-- VIEW 1: DASHBOARD METRICS VIEW -->

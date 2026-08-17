@@ -114,6 +114,7 @@ function setupTabSwitches() {
   const tabs = document.querySelectorAll(".admin-view-tab");
   const viewTitle = document.getElementById("admin-view-title");
   const headerBtn = document.getElementById("admin-header-btn");
+  const headerBtnSec = document.getElementById("admin-header-btn-sec");
 
   menuItems.forEach(item => {
     item.addEventListener("click", function(e) {
@@ -137,30 +138,40 @@ function setupTabSwitches() {
         headerBtn.style.display = "inline-flex";
         headerBtn.innerHTML = `Add New Product <i class="fa-solid fa-plus"></i>`;
         headerBtn.setAttribute("onclick", "openAddProductModal()");
+        if (headerBtnSec) {
+          headerBtnSec.style.display = "inline-flex";
+          headerBtnSec.innerHTML = `Create Manual Order <i class="fa-solid fa-plus"></i>`;
+          headerBtnSec.setAttribute("onclick", "openManualOrderModal()");
+        }
         loadAnalytics(); // refresh metrics
       } else if (targetView === "products-view") {
         viewTitle.textContent = "Products Catalog CRUD";
         headerBtn.style.display = "inline-flex";
         headerBtn.innerHTML = `Create Product <i class="fa-solid fa-plus"></i>`;
         headerBtn.setAttribute("onclick", "openAddProductModal()");
+        if (headerBtnSec) headerBtnSec.style.display = "none";
         renderProductsTable();
       } else if (targetView === "orders-view") {
         viewTitle.textContent = "Orders Ledger Log";
         headerBtn.style.display = "inline-flex";
         headerBtn.innerHTML = `Create Manual Order <i class="fa-solid fa-plus"></i>`;
         headerBtn.setAttribute("onclick", "openManualOrderModal()");
+        if (headerBtnSec) headerBtnSec.style.display = "none";
         renderOrdersTable();
       } else if (targetView === "coupons-view") {
         viewTitle.textContent = "Discount Coupons Control";
         headerBtn.style.display = "none";
+        if (headerBtnSec) headerBtnSec.style.display = "none";
         renderCouponsTable();
       } else if (targetView === "categories-view") {
         viewTitle.textContent = "Product Categories CRUD";
         headerBtn.style.display = "none";
+        if (headerBtnSec) headerBtnSec.style.display = "none";
         renderCategoriesTable();
       } else if (targetView === "settings-view") {
         viewTitle.textContent = "Store Settings & API Control";
         headerBtn.style.display = "none";
+        if (headerBtnSec) headerBtnSec.style.display = "none";
         window.loadStoreSettings();
       }
     });
