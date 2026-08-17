@@ -15,7 +15,12 @@ const PORT = process.env.PORT || 3000;
 
 // Define local and persistent upload directories
 const localUploadDir = path.join(__dirname, 'images', 'uploads');
-const persistentUploadDir = path.join(__dirname, '..', 'persistent_uploads');
+let persistentUploadDir = path.join(__dirname, '..', 'persistent_uploads');
+
+// Check if running on Hostinger production VPS to use a truly persistent path outside the builds folder
+if (__dirname.includes('u279206464')) {
+  persistentUploadDir = '/home/u279206464/domains/coorgharvest.com/persistent_uploads';
+}
 
 // Ensure both directories exist
 if (!fs.existsSync(localUploadDir)) {
