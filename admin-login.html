@@ -148,7 +148,7 @@
       <form id="credentials-form" onsubmit="handleCredentialsSubmit(event)">
         <div class="form-group">
           <label for="login-username">Administrator Username</label>
-          <input type="text" id="login-username" class="form-control-login" placeholder="coorg_harvest" required autocomplete="username">
+          <input type="text" id="login-username" class="form-control-login" placeholder="Enter username" required autocomplete="username">
         </div>
         
         <div class="form-group">
@@ -167,14 +167,13 @@
       <div class="otp-overlay" id="otp-view">
         <p style="font-size:0.85rem; color:var(--warm-cream); text-align:center; margin-bottom:20px; line-height:1.4;">
           <i class="fa-solid fa-mobile-screen-button" style="color:var(--accent-gold); font-size:1.1rem; display:block; margin-bottom:8px;"></i>
-          A 6-digit verification OTP has been dispatched to your registered phone number.<br>
-          <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:block; margin-top:5px;">(Simulated OTP Code: <strong>808080</strong>)</span>
+          A 6-digit verification OTP has been dispatched to your registered phone number.
         </p>
 
         <form id="otp-form" onsubmit="handleOtpSubmit(event)">
           <div class="form-group">
             <label for="login-otp">Two-Factor OTP Code</label>
-            <input type="text" id="login-otp" class="form-control-login" maxlength="6" pattern="[0-9]{6}" placeholder="E.g., 808080" required style="text-align:center; letter-spacing:6px; font-size:1.4rem;">
+            <input type="text" id="login-otp" class="form-control-login" maxlength="6" pattern="[0-9]{6}" placeholder="------" required style="text-align:center; letter-spacing:6px; font-size:1.4rem;">
           </div>
 
           <div id="otp-error-msg" class="login-error"></div>
