@@ -413,7 +413,8 @@ const seedMockOrders = [
     total: 752,
     paymentMethod: "UPI",
     status: "Paid",
-    trackingId: "CHTRK9928182"
+    trackingId: "CHTRK9928182",
+    couponCode: "COORG20"
   },
   {
     id: "CH-2026-4402",
@@ -562,7 +563,8 @@ async function createTables() {
       total DECIMAL(10, 2),
       paymentMethod VARCHAR(50),
       status VARCHAR(50),
-      trackingId VARCHAR(255)
+      trackingId VARCHAR(255),
+      couponCode VARCHAR(255)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
@@ -587,9 +589,27 @@ async function createTables() {
       setting_value TEXT NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  // Migration: Add couponCode column to orders table if it doesn't exist yet
+  try {
+    await db.query('ALTER TABLE orders ADD COLUMN couponCode VARCHAR(255) NULL');
+  } catch (err) {
+    // Column already exists, safe to ignore
+  }
 }
 
 async function seedDatabase() {
+  // Check if database was already seeded
+  try {
+    const [seededSetting] = await db.query('SELECT setting_value FROM settings WHERE setting_key = "database_seeded"');
+    if (seededSetting.length > 0 && seededSetting[0].setting_value === 'true') {
+      console.log('🌿 Database already initialized and seeded. Skipping seeding.');
+      return;
+    }
+  } catch (err) {
+    console.log('🌱 Settings table does not exist or database unseeded. Proceeding with seeding...');
+  }
+
   // Seed Categories
   const [cats] = await db.query('SELECT COUNT(*) as count FROM categories');
   if (cats[0].count === 0) {
@@ -610,12 +630,6 @@ async function seedDatabase() {
   // Seed Products
   console.log('🌱 Checking catalog products seeding...');
   
-  // Clean up any old products from the database that are not in our seedProducts list
-  const seedIds = seedProducts.map(p => p.id);
-  if (seedIds.length > 0) {
-    await db.query('DELETE FROM products WHERE id NOT IN (?)', [seedIds]);
-  }
-
   for (const p of seedProducts) {
     const [exists] = await db.query('SELECT id FROM products WHERE id = ?', [p.id]);
     if (exists.length === 0) {
@@ -649,10 +663,10 @@ async function seedDatabase() {
     console.log('🌱 Seeding mock orders...');
     for (const o of seedMockOrders) {
       await db.query(
-        'INSERT INTO orders (id, date, name, phone, email, address, items, subtotal, discount, shipping, total, paymentMethod, status, trackingId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO orders (id, date, name, phone, email, address, items, subtotal, discount, shipping, total, paymentMethod, status, trackingId, couponCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           o.id, o.date, o.name, o.phone, o.email, o.address, JSON.stringify(o.items),
-          o.subtotal, o.discount, o.shipping, o.total, o.paymentMethod, o.status, o.trackingId
+          o.subtotal, o.discount, o.shipping, o.total, o.paymentMethod, o.status, o.trackingId, o.couponCode || null
         ]
       );
     }
@@ -713,6 +727,9 @@ async function seedDatabase() {
       await db.query('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)', [s.key, s.value]);
     }
   }
+
+  // Mark database as seeded
+  await db.query('INSERT INTO settings (setting_key, setting_value) VALUES ("database_seeded", "true") ON DUPLICATE KEY UPDATE setting_value = "true"');
 }
 
 // REST API Endpoints
@@ -919,10 +936,10 @@ app.post('/api/orders', checkDB, async (req, res) => {
 
     // Save order
     await connection.query(
-      'INSERT INTO orders (id, date, name, phone, email, address, items, subtotal, discount, shipping, total, paymentMethod, status, trackingId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO orders (id, date, name, phone, email, address, items, subtotal, discount, shipping, total, paymentMethod, status, trackingId, couponCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         o.id, o.date, o.name, o.phone, o.email, o.address, JSON.stringify(o.items),
-        o.subtotal, o.discount, o.shipping, o.total, o.paymentMethod, o.status, o.trackingId
+        o.subtotal, o.discount, o.shipping, o.total, o.paymentMethod, o.status, o.trackingId, o.couponCode || null
       ]
     );
 
@@ -941,6 +958,16 @@ app.post('/api/orders', checkDB, async (req, res) => {
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();
+  }
+});
+
+app.delete('/api/orders/:id', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM orders WHERE id=?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

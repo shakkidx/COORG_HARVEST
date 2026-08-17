@@ -368,7 +368,7 @@ function renderOrdersTable(filterText = "") {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--medium-gray);">No orders found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--medium-gray);">No orders found.</td></tr>`;
     return;
   }
 
@@ -403,6 +403,7 @@ function renderOrdersTable(filterText = "") {
         <div class="action-btns" style="display: flex; gap: 8px; justify-content: flex-end;">
           <button class="action-btn download" style="background-color: var(--primary-green); color: white;" onclick="adminDownloadInvoice('${o.id}')" title="Download Invoice PDF"><i class="fa-solid fa-file-invoice"></i></button>
           <button class="action-btn download" style="background-color: var(--accent-gold); color: white;" onclick="adminDownloadDeliverySlip('${o.id}')" title="Download 4x6 Delivery Label"><i class="fa-solid fa-truck-ramp-box"></i></button>
+          <button class="action-btn delete" onclick="deleteOrderHandler('${o.id}')" title="Delete Order"><i class="fa-regular fa-trash-can"></i></button>
         </div>
       </td>
     </tr>
@@ -424,6 +425,16 @@ window.updateOrderTrackingHandler = async function(orderId) {
   alert(`Tracking ID updated successfully for order ${orderId}!`);
   renderOrdersTable();
   renderActivityLogsList();
+};
+
+window.deleteOrderHandler = async function(orderId) {
+  if (confirm(`Are you sure you want to permanently delete order ${orderId}? This action cannot be undone.`)) {
+    await window.CoorgDB.deleteOrder(orderId);
+    renderOrdersTable();
+    loadAnalytics();
+    renderActivityLogsList();
+    renderCouponsTable();
+  }
 };
 
 // Admin Reprinting PDF Action (binds to success page invoice methods)
@@ -828,23 +839,30 @@ function renderCouponsTable() {
   if (!tbody) return;
 
   const coupons = window.CoorgDB.getCoupons();
+  const orders = window.CoorgDB.getOrders();
 
   if (coupons.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--medium-gray);">No coupons created.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--medium-gray);">No coupons created.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = coupons.map(c => `
-    <tr>
-      <td style="font-weight:700; color:var(--accent-gold);">${c.code}</td>
-      <td style="text-transform:capitalize;">${c.type}</td>
-      <td style="font-weight:600;">${c.type === 'percent' ? c.value + '%' : '₹' + c.value}</td>
-      <td>${c.description}</td>
-      <td>
-        <button class="action-btn delete" onclick="deleteCouponHandler('${c.code}')" title="Delete Coupon"><i class="fa-regular fa-trash-can"></i></button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = coupons.map(c => {
+    const couponOrders = orders.filter(o => o.couponCode && o.couponCode.toUpperCase() === c.code.toUpperCase());
+    const totalSales = couponOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const usageText = couponOrders.length === 1 ? '1 order' : `${couponOrders.length} orders`;
+    return `
+      <tr>
+        <td style="font-weight:700; color:var(--accent-gold);">${c.code}</td>
+        <td style="text-transform:capitalize;">${c.type}</td>
+        <td style="font-weight:600;">${c.type === 'percent' ? c.value + '%' : '₹' + c.value}</td>
+        <td>${c.description}</td>
+        <td style="font-weight:600; color:var(--primary-green);">${usageText} (₹${totalSales.toFixed(2)})</td>
+        <td>
+          <button class="action-btn delete" onclick="deleteCouponHandler('${c.code}')" title="Delete Coupon"><i class="fa-regular fa-trash-can"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 window.handleCreateCoupon = async function(e) {

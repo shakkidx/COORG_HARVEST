@@ -313,6 +313,19 @@
         console.error("Error updating order tracking on server database:", err);
       }
     },
+    deleteOrder: async function(id) {
+      cache.orders = cache.orders.filter(o => o.id !== id);
+      localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
+      await this.logActivity(`Deleted order: ${id}`);
+
+      try {
+        await fetch(`/api/orders/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error("Error deleting order from server database:", err);
+      }
+    },
 
     // 6. ACTIVITY LOGS CRUD
     getActivityLogs: function() {

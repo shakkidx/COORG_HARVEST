@@ -137,7 +137,7 @@ The Admin Panel has been completely decoupled from public-facing customer menus 
 ### Security Operations:
 1.  **Web Crypto Hashing:** Passwords entered on the login gateway are hashed with SHA-256 client-side before matching against the secure database hash.
 2.  **Lockout Lock Trigger:** Exceeding 5 failed login attempts logs security audits and locks the form for 5 minutes with a live countdown clock.
-3.  **Two-Factor Authentication (OTP):** Successfully validated credentials prompt a 2FA OTP prompt (OTP token is set as `123456`).
+3.  **Two-Factor Authentication (OTP):** Successfully validated credentials prompt a 2FA OTP prompt (OTP token is set as `808080`).
 4.  **Inactivity Timer:** Inactive users on the admin panel for 30 minutes are automatically logged out, and audit logs are recorded.
 
 ---

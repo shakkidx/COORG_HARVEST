@@ -544,6 +544,9 @@
       const freeThreshold = parseFloat(settings.free_delivery_threshold || "500");
       const shipping = subtotal >= freeThreshold ? 0 : deliveryCharge;
 
+      const coupon = JSON.parse(localStorage.getItem("coorg_applied_coupon"));
+      const couponCode = coupon ? coupon.code : null;
+
       const newOrder = {
         id: orderId,
         date: dateStr,
@@ -558,7 +561,8 @@
         total: grandTotal,
         paymentMethod: activePaymentMethod.toUpperCase(),
         status: paymentStatus,
-        trackingId: trackingNumber
+        trackingId: trackingNumber,
+        couponCode: couponCode
       };
 
       // Place order in DB (clears cart, updates stocks, logs activity)

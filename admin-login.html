@@ -168,13 +168,13 @@
         <p style="font-size:0.85rem; color:var(--warm-cream); text-align:center; margin-bottom:20px; line-height:1.4;">
           <i class="fa-solid fa-mobile-screen-button" style="color:var(--accent-gold); font-size:1.1rem; display:block; margin-bottom:8px;"></i>
           A 6-digit verification OTP has been dispatched to your registered phone number.<br>
-          <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:block; margin-top:5px;">(Simulated OTP Code: <strong>123456</strong>)</span>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:block; margin-top:5px;">(Simulated OTP Code: <strong>808080</strong>)</span>
         </p>
 
         <form id="otp-form" onsubmit="handleOtpSubmit(event)">
           <div class="form-group">
             <label for="login-otp">Two-Factor OTP Code</label>
-            <input type="text" id="login-otp" class="form-control-login" maxlength="6" pattern="[0-9]{6}" placeholder="E.g., 123456" required style="text-align:center; letter-spacing:6px; font-size:1.4rem;">
+            <input type="text" id="login-otp" class="form-control-login" maxlength="6" pattern="[0-9]{6}" placeholder="E.g., 808080" required style="text-align:center; letter-spacing:6px; font-size:1.4rem;">
           </div>
 
           <div id="otp-error-msg" class="login-error"></div>
@@ -293,7 +293,7 @@
       const otpInput = document.getElementById("login-otp").value.trim();
       const otpError = document.getElementById("otp-error-msg");
 
-      if (otpInput === "123456") {
+      if (otpInput === "808080") {
         // Authenticate session
         sessionStorage.setItem("coorg_admin_logged_in", "true");
         sessionStorage.setItem("coorg_admin_username", expectedUsername);
