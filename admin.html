@@ -53,7 +53,7 @@
   <nav class="admin-mobile-bottom-nav">
     <button class="mobile-nav-btn active" data-view="dashboard-view" onclick="switchAdminTab('dashboard-view')">
       <i class="fa-solid fa-chart-line"></i>
-      <span>Home</span>
+      <span>Overview</span>
     </button>
     <button class="mobile-nav-btn" data-view="orders-view" onclick="switchAdminTab('orders-view')">
       <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -470,9 +470,9 @@
       <div class="admin-view-tab" id="pnl-view" style="display:none;">
         <!-- Filter Header -->
         <div class="admin-data-card" style="padding:15px 25px; margin-bottom:25px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-              <span style="font-weight:600; font-size:0.9rem; color:var(--dark-text);"><i class="fa-solid fa-filter"></i> Filters:</span>
+          <div class="admin-filter-bar">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <span style="font-weight:600; font-size:0.9rem; color:var(--dark-text); white-space:nowrap;"><i class="fa-solid fa-filter"></i> Filters:</span>
               <select id="pnl-period-filter" class="form-control" style="width:160px;" onchange="window.renderPnLView()">
                 <option value="ALL">All Time</option>
                 <option value="THIS_MONTH" selected>This Month</option>
@@ -491,9 +491,11 @@
                 <option value="Phone">Phone / Direct</option>
               </select>
             </div>
-            <button class="btn btn-secondary" onclick="exportPnLReportCSV()" style="font-size:0.85rem; padding:8px 16px; display:inline-flex; align-items:center; gap:6px;">
-              <i class="fa-solid fa-file-csv"></i> Export P&L Report
-            </button>
+            <div class="admin-filter-actions">
+              <button class="btn btn-secondary" onclick="exportPnLReportCSV()" style="font-size:0.85rem; padding:8px 16px; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-file-csv"></i> Export P&L Report
+              </button>
+            </div>
           </div>
         </div>
 
@@ -611,14 +613,14 @@
       <!-- VIEW 3.4: MONTHLY GST REPORTS VIEW -->
       <div class="admin-view-tab" id="gst-reports-view" style="display:none;">
         <div class="admin-data-card" style="padding:15px 25px; margin-bottom:25px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-            <div style="display:flex; align-items:center; gap:15px;">
-              <label style="font-weight:600; font-size:0.9rem; margin:0;"><i class="fa-solid fa-calendar-days"></i> Return Filing Month:</label>
+          <div class="admin-filter-bar">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <label style="font-weight:600; font-size:0.9rem; margin:0; white-space:nowrap;"><i class="fa-solid fa-calendar-days"></i> Return Filing Month:</label>
               <select id="gst-month-select" class="form-control" style="width:200px;" onchange="window.renderGstReportsView()">
                 <!-- Populated dynamically -->
               </select>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div class="admin-filter-actions">
               <button class="btn btn-secondary" onclick="exportGstr1CSV()" style="font-size:0.85rem; padding:8px 16px;">
                 <i class="fa-solid fa-file-csv"></i> Export GSTR-1 CSV
               </button>
@@ -1579,29 +1581,6 @@
     </div>
   </div>
 
-  <!-- Mobile Bottom Navigation Bar for Admin Tabs -->
-  <nav class="admin-mobile-nav">
-    <a href="#" class="admin-menu-item active" data-view="dashboard-view">
-      <i class="fa-solid fa-chart-line"></i>
-      <span>Overview</span>
-    </a>
-    <a href="#" class="admin-menu-item" data-view="orders-view">
-      <i class="fa-solid fa-file-invoice-dollar"></i>
-      <span>Orders</span>
-    </a>
-    <a href="#" class="admin-menu-item" data-view="products-view">
-      <i class="fa-solid fa-boxes-stacked"></i>
-      <span>Products</span>
-    </a>
-    <a href="#" class="admin-menu-item" data-view="categories-view">
-      <i class="fa-solid fa-folder-tree"></i>
-      <span>Categories</span>
-    </a>
-    <a href="#" class="admin-menu-item" data-view="settings-view">
-      <i class="fa-solid fa-gears"></i>
-      <span>Settings</span>
-    </a>
-  </nav>
 
   <!-- Scripts -->
   <script src="js/config.js"></script>
