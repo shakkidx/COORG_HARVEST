@@ -1,0 +1,18 @@
+{
+  "name": "Coorg Harvest Business Manager",
+  "short_name": "Coorg Admin",
+  "description": "Multi-Channel Orders, Live Inventory, Purchases, P&L Analytics, and Monthly GST Returns for Coorg Harvest",
+  "start_url": "/admin.html",
+  "display": "standalone",
+  "background_color": "#1b4332",
+  "theme_color": "#1b4332",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

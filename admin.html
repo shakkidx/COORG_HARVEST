@@ -10,10 +10,18 @@
       }
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin Dashboard | Coorg Harvest Store Management</title>
   
-  <meta name="description" content="Manage products, view inventory levels, track customer transactions, analyze sales, and edit coupon codes.">
+  <meta name="description" content="Enterprise multi-channel orders, purchases, live stock, P&L analytics, and GST management for Coorg Harvest.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b4332">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coorg Admin">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   
@@ -22,12 +30,60 @@
 </head>
 <body>
 
+  <!-- Mobile Top App Bar (Visible on mobile <= 992px) -->
+  <header class="admin-mobile-appbar">
+    <button id="admin-mobile-drawer-toggle" class="mobile-icon-btn" onclick="toggleAdminMobileDrawer()" aria-label="Toggle Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="admin-mobile-brand" onclick="switchAdminTab('dashboard-view')">
+      <img src="logo.png" alt="Coorg Harvest" class="mobile-logo-img">
+      <span class="mobile-brand-title">Coorg Harvest</span>
+    </div>
+    <div class="mobile-header-actions">
+      <button class="mobile-quick-btn" onclick="openManualOrderModal()" title="Create Order">
+        <i class="fa-solid fa-plus"></i> <span>Order</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar Backdrop on Mobile -->
+  <div class="admin-sidebar-backdrop" id="admin-sidebar-backdrop" onclick="closeAdminMobileDrawer()"></div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="admin-mobile-bottom-nav">
+    <button class="mobile-nav-btn active" data-view="dashboard-view" onclick="switchAdminTab('dashboard-view')">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Home</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="orders-view" onclick="switchAdminTab('orders-view')">
+      <i class="fa-solid fa-file-invoice-dollar"></i>
+      <span>Orders</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="inventory-view" onclick="switchAdminTab('inventory-view')">
+      <i class="fa-solid fa-warehouse"></i>
+      <span>Stock</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="purchases-view" onclick="switchAdminTab('purchases-view')">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+      <span>Inward</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobile-nav-more-btn" onclick="toggleAdminMobileDrawer()">
+      <i class="fa-solid fa-bars-staggered"></i>
+      <span>More</span>
+    </button>
+  </nav>
+
   <div class="admin-layout">
     
     <!-- Left Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="admin-sidebar-logo" style="text-align: center; justify-content: center; padding: 0 15px; margin-bottom: 15px;">
-        <img src="logo.png" alt="Coorg Harvest Logo" style="height: 65px; width: auto; object-fit: contain; background: white; padding: 4px; border-radius: 8px;">
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="admin-sidebar-header-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px; margin-bottom: 15px;">
+        <div class="admin-sidebar-logo" style="text-align: center; justify-content: center; margin-bottom: 0;">
+          <img src="logo.png" alt="Coorg Harvest Logo" style="height: 55px; width: auto; object-fit: contain; background: white; padding: 4px; border-radius: 8px;">
+        </div>
+        <button class="mobile-drawer-close-btn" onclick="closeAdminMobileDrawer()" style="display: none; background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; padding: 8px;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
       
       <!-- Profile Widget -->
@@ -51,11 +107,26 @@
         <a href="#" class="admin-menu-item" data-view="orders-view">
           <i class="fa-solid fa-file-invoice-dollar"></i> Orders Log
         </a>
+        <a href="#" class="admin-menu-item" data-view="purchases-view">
+          <i class="fa-solid fa-truck-ramp-box"></i> Purchases / Inward
+        </a>
+        <a href="#" class="admin-menu-item" data-view="inventory-view">
+          <i class="fa-solid fa-warehouse"></i> Inventory & Loss
+        </a>
+        <a href="#" class="admin-menu-item" data-view="pnl-view">
+          <i class="fa-solid fa-scale-balanced"></i> P&L & Analytics
+        </a>
+        <a href="#" class="admin-menu-item" data-view="gst-reports-view">
+          <i class="fa-solid fa-file-shield"></i> Monthly GST Reports
+        </a>
         <a href="#" class="admin-menu-item" data-view="coupons-view">
           <i class="fa-solid fa-ticket"></i> Coupon Manager
         </a>
         <a href="#" class="admin-menu-item" data-view="settings-view">
           <i class="fa-solid fa-gears"></i> Settings
+        </a>
+        <a href="#" class="admin-menu-item" id="admin-install-pwa-btn" style="color: var(--accent-gold); display: flex;" onclick="window.triggerPwaInstall()">
+          <i class="fa-solid fa-mobile-screen-button"></i> Install Mobile App
         </a>
         <a href="#" class="admin-menu-item" id="admin-logout-btn" style="color: #E74C3C;">
           <i class="fa-solid fa-power-off"></i> Log Out Session
@@ -182,25 +253,488 @@
       <!-- VIEW 3: ORDERS LOG VIEW -->
       <div class="admin-view-tab" id="orders-view" style="display:none;">
         <div class="admin-data-card">
-          <div class="table-controls" style="justify-content:flex-start;">
-            <input type="text" id="order-table-search" class="form-control table-search" placeholder="Search orders by customer or ID...">
+          <div class="table-controls" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; gap:10px; flex:1; min-width:280px; align-items:center; flex-wrap:wrap;">
+              <input type="text" id="order-table-search" class="form-control table-search" placeholder="Search orders by customer, ID or phone..." style="max-width:280px;">
+              <select id="order-filter-channel" class="form-control" style="width:160px;" onchange="window.filterOrders()">
+                <option value="ALL">All Channels</option>
+                <option value="Website">Own Website</option>
+                <option value="Amazon">Amazon India</option>
+                <option value="Meesho">Meesho</option>
+                <option value="Flipkart">Flipkart</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Store">Walk-in Store</option>
+                <option value="Phone">Phone / Direct</option>
+              </select>
+              <select id="order-filter-status" class="form-control" style="width:160px;" onchange="window.filterOrders()">
+                <option value="ALL">All Statuses</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending COD">Pending COD</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Returned">Returned</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="openManualOrderModal()" style="font-size:0.85rem; padding:8px 16px;">
+              Create Manual Order <i class="fa-solid fa-plus"></i>
+            </button>
           </div>
           
           <div class="admin-table-wrapper">
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Customer Name</th>
-                  <th>Date & Time</th>
+                  <th>Order ID / Channel</th>
+                  <th>Customer Info</th>
+                  <th>Date</th>
                   <th>Amount</th>
-                  <th>Payment Type</th>
-                  <th>Order Status</th>
-                  <th>Tracking ID</th>
+                  <th>Net Profit</th>
+                  <th>Payment / Status</th>
+                  <th>Tracking</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="order-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3.1: PURCHASES / INWARD BILLS VIEW -->
+      <div class="admin-view-tab" id="purchases-view" style="display:none;">
+        <!-- Top Stats row -->
+        <div class="admin-stats-grid" style="margin-bottom:25px;">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Total Purchases</p>
+              <div class="stat-box-num" id="stat-purchases-total">₹0.00</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-cart-flatbed"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Eligible Input Tax (ITC)</p>
+              <div class="stat-box-num" id="stat-purchases-tax" style="color:var(--accent-gold);">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:var(--accent-gold);"><i class="fa-solid fa-file-invoice"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Inward Bills Count</p>
+              <div class="stat-box-num" id="stat-purchases-count">0</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-boxes-packing"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Active Vendors</p>
+              <div class="stat-box-num" id="stat-purchases-vendors">0</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-handshake"></i></div>
+          </div>
+        </div>
+
+        <div class="admin-data-card">
+          <div class="table-controls" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <input type="text" id="purchase-table-search" class="form-control table-search" placeholder="Search by vendor, invoice no, or phone..." style="max-width:320px;">
+            <button class="btn btn-primary" onclick="openAddPurchaseModal()" style="font-size:0.85rem; padding:8px 16px;">
+              Record Inward Purchase Bill <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Invoice No</th>
+                  <th>Vendor Details</th>
+                  <th>Date</th>
+                  <th>Items Inward</th>
+                  <th>Taxable Value</th>
+                  <th>GST Amount</th>
+                  <th>Total Bill</th>
+                  <th>Payment</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchase-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3.2: INVENTORY & DAMAGED STOCK VIEW -->
+      <div class="admin-view-tab" id="inventory-view" style="display:none;">
+        <div class="admin-stats-grid" style="margin-bottom:25px;">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Warehouse Stock</p>
+              <div class="stat-box-num" id="stat-inventory-units">0 units</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Valuation (At Cost)</p>
+              <div class="stat-box-num" id="stat-inventory-cost-value">₹0.00</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-coins"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Low Stock Warnings</p>
+              <div class="stat-box-num" id="stat-inventory-low-stock" style="color:var(--red);">0</div>
+            </div>
+            <div class="stat-box-icon" style="color:var(--red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Damaged Stock Loss</p>
+              <div class="stat-box-num" id="stat-inventory-damage-loss" style="color:var(--red);">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:var(--red);"><i class="fa-solid fa-box-tissue"></i></div>
+          </div>
+        </div>
+
+        <!-- Section 1: Live Stock Management -->
+        <div class="admin-data-card" style="margin-bottom:30px;">
+          <div class="chart-title-row" style="margin-bottom:15px;">
+            <h3>Live Product Stock & Margin Economics</h3>
+            <span style="font-size:0.8rem; color:var(--medium-gray);">Direct stock balance and margin control</span>
+          </div>
+          <div class="table-controls" style="justify-content:flex-start;">
+            <input type="text" id="inventory-table-search" class="form-control table-search" placeholder="Search product stock levels...">
+          </div>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Cost Price (CP)</th>
+                  <th>GST Rate</th>
+                  <th>Sale / Offer Price</th>
+                  <th>Stock Balance</th>
+                  <th>Stock Valuation</th>
+                  <th>Quick Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 2: Damaged Stock & Spoilage Log -->
+        <div class="admin-data-card">
+          <div class="chart-title-row" style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 style="color:var(--red); display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-boxes-packing"></i> Damaged & Lost Stock Register
+              </h3>
+              <p style="font-size:0.8rem; color:var(--medium-gray); margin-top:4px;">Records losses from transit damage, expired batches, or return damage.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="openDamagedStockModal()" style="font-size:0.85rem; padding:8px 16px; border-color:var(--red); color:var(--red);">
+              + Record Damaged Stock
+            </button>
+          </div>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Product</th>
+                  <th>Quantity Lost</th>
+                  <th>Unit Cost</th>
+                  <th>Total Loss Value</th>
+                  <th>Reason Category</th>
+                  <th>Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="damaged-stock-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3.3: P&L & MULTI-CHANNEL ANALYTICS VIEW -->
+      <div class="admin-view-tab" id="pnl-view" style="display:none;">
+        <!-- Filter Header -->
+        <div class="admin-data-card" style="padding:15px 25px; margin-bottom:25px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+              <span style="font-weight:600; font-size:0.9rem; color:var(--dark-text);"><i class="fa-solid fa-filter"></i> Filters:</span>
+              <select id="pnl-period-filter" class="form-control" style="width:160px;" onchange="window.renderPnLView()">
+                <option value="ALL">All Time</option>
+                <option value="THIS_MONTH" selected>This Month</option>
+                <option value="LAST_MONTH">Last Month</option>
+                <option value="THIS_YEAR">This Year</option>
+              </select>
+              <select id="pnl-channel-filter" class="form-control" style="width:160px;" onchange="window.renderPnLView()">
+                <option value="ALL">All Channels</option>
+                <option value="Website">Own Website</option>
+                <option value="Amazon">Amazon India</option>
+                <option value="Meesho">Meesho</option>
+                <option value="Flipkart">Flipkart</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Store">Walk-in Store</option>
+                <option value="Phone">Phone / Direct</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary" onclick="exportPnLReportCSV()" style="font-size:0.85rem; padding:8px 16px; display:inline-flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-file-csv"></i> Export P&L Report
+            </button>
+          </div>
+        </div>
+
+        <!-- High Level Profitability Metrics -->
+        <div class="admin-stats-grid" style="margin-bottom:25px; grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Gross Sales Revenue</p>
+              <div class="stat-box-num" id="pnl-stat-revenue">₹0.00</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Product Cost (COGS)</p>
+              <div class="stat-box-num" id="pnl-stat-cogs" style="color:#d35400;">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:#d35400;"><i class="fa-solid fa-box-open"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Commissions & Fees</p>
+              <div class="stat-box-num" id="pnl-stat-commissions" style="color:#8e44ad;">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:#8e44ad;"><i class="fa-solid fa-percentage"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Net Realized Profit</p>
+              <div class="stat-box-num" id="pnl-stat-net-profit" style="color:var(--primary-green);">₹0.00</div>
+              <small id="pnl-stat-margin-pct" style="font-weight:600; color:var(--primary-green); font-size:0.8rem;">0.0% margin</small>
+            </div>
+            <div class="stat-box-icon" style="color:var(--primary-green);"><i class="fa-solid fa-chart-line"></i></div>
+          </div>
+        </div>
+
+        <div class="admin-stats-grid" style="margin-bottom:25px; grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Courier & Shipping Spent</p>
+              <div class="stat-box-num" id="pnl-stat-shipping" style="color:#2980b9;">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:#2980b9;"><i class="fa-solid fa-truck-fast"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Packaging & Boxes</p>
+              <div class="stat-box-num" id="pnl-stat-packing" style="color:#16a085;">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:#16a085;"><i class="fa-solid fa-box"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Return & Spoilage Losses</p>
+              <div class="stat-box-num" id="pnl-stat-returns" style="color:var(--red);">₹0.00</div>
+            </div>
+            <div class="stat-box-icon" style="color:var(--red);"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+          </div>
+        </div>
+
+        <!-- Channel Performance Breakdown -->
+        <div class="admin-data-card" style="margin-bottom:30px;">
+          <h3 style="margin-bottom:15px;">Sales Channel Unit Economics Comparison</h3>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Sales Channel</th>
+                  <th>Orders Count</th>
+                  <th>Gross Sales</th>
+                  <th>Product Cost (COGS)</th>
+                  <th>Marketplace Fees</th>
+                  <th>Delivery Costs</th>
+                  <th>Packaging Costs</th>
+                  <th>Return Losses</th>
+                  <th>Net Profit</th>
+                  <th>Net Margin</th>
+                </tr>
+              </thead>
+              <tbody id="pnl-channel-summary-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Order-level P&L details -->
+        <div class="admin-data-card">
+          <h3 style="margin-bottom:15px;">Order-Level P&L Financial Ledger</h3>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Channel</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Sale Value</th>
+                  <th>Cost Price</th>
+                  <th>Fees & Comm</th>
+                  <th>Shipping</th>
+                  <th>Net Profit</th>
+                  <th>Status</th>
+                  <th>Breakdown</th>
+                </tr>
+              </thead>
+              <tbody id="pnl-orders-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3.4: MONTHLY GST REPORTS VIEW -->
+      <div class="admin-view-tab" id="gst-reports-view" style="display:none;">
+        <div class="admin-data-card" style="padding:15px 25px; margin-bottom:25px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+              <label style="font-weight:600; font-size:0.9rem; margin:0;"><i class="fa-solid fa-calendar-days"></i> Return Filing Month:</label>
+              <select id="gst-month-select" class="form-control" style="width:200px;" onchange="window.renderGstReportsView()">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-secondary" onclick="exportGstr1CSV()" style="font-size:0.85rem; padding:8px 16px;">
+                <i class="fa-solid fa-file-csv"></i> Export GSTR-1 CSV
+              </button>
+              <button class="btn btn-primary" onclick="exportGstr3BCSV()" style="font-size:0.85rem; padding:8px 16px;">
+                <i class="fa-solid fa-file-csv"></i> Export GSTR-3B CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tax Summary KPIs -->
+        <div class="admin-stats-grid" style="margin-bottom:25px; grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Total Taxable Sales</p>
+              <div class="stat-box-num" id="gst-stat-taxable-sales">₹0.00</div>
+            </div>
+            <div class="stat-box-icon"><i class="fa-solid fa-cash-register"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Total Output Tax (Sales)</p>
+              <div class="stat-box-num" id="gst-stat-output-tax">₹0.00</div>
+              <small id="gst-stat-output-breakdown" style="font-size:0.75rem; color:var(--medium-gray);">CGST: ₹0 | SGST: ₹0</small>
+            </div>
+            <div class="stat-box-icon" style="color:var(--red);"><i class="fa-solid fa-receipt"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Input Tax Credit (Purchases)</p>
+              <div class="stat-box-num" id="gst-stat-itc-tax" style="color:var(--accent-gold);">₹0.00</div>
+              <small id="gst-stat-itc-breakdown" style="font-size:0.75rem; color:var(--medium-gray);">From Inward Bills</small>
+            </div>
+            <div class="stat-box-icon" style="color:var(--accent-gold);"><i class="fa-solid fa-shield-halved"></i></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-info">
+              <p>Net GST Payable in Cash</p>
+              <div class="stat-box-num" id="gst-stat-net-payable" style="color:var(--primary-green);">₹0.00</div>
+              <small style="font-size:0.75rem; color:var(--primary-green);">Output Tax minus ITC</small>
+            </div>
+            <div class="stat-box-icon" style="color:var(--primary-green);"><i class="fa-solid fa-building-columns"></i></div>
+          </div>
+        </div>
+
+        <!-- Section GSTR-3B Summary -->
+        <div class="admin-data-card" style="margin-bottom:30px;">
+          <h3 style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-calculator"></i> GSTR-3B Monthly Tax Computation Summary
+          </h3>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Description / Table Head</th>
+                  <th>Taxable Value</th>
+                  <th>CGST</th>
+                  <th>SGST</th>
+                  <th>IGST</th>
+                  <th>Total Tax Amount</th>
+                </tr>
+              </thead>
+              <tbody id="gstr3b-table-body">
+                <!-- dynamic rows: 3.1 Outward, 4.0 ITC, 5.0 Net Cash Payable -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section GSTR-1 Sales Breakdown -->
+        <div class="admin-data-card" style="margin-bottom:30px;">
+          <h3 style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-list-check"></i> GSTR-1 Outward Supplies (B2B & B2C Breakdown)
+          </h3>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Invoice / Order</th>
+                  <th>Customer Name & GSTIN</th>
+                  <th>Supply Type</th>
+                  <th>Taxable Value</th>
+                  <th>GST Rate</th>
+                  <th>CGST</th>
+                  <th>SGST</th>
+                  <th>IGST</th>
+                  <th>Invoice Total</th>
+                </tr>
+              </thead>
+              <tbody id="gstr1-table-body">
+                <!-- dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HSN Summary -->
+        <div class="admin-data-card">
+          <h3 style="margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-barcode"></i> HSN / SAC Summary of Outward Supplies
+          </h3>
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>HSN Code</th>
+                  <th>Description</th>
+                  <th>Total Quantity</th>
+                  <th>Total Value</th>
+                  <th>Taxable Value</th>
+                  <th>CGST</th>
+                  <th>SGST</th>
+                  <th>IGST</th>
+                </tr>
+              </thead>
+              <tbody id="gst-hsn-table-body">
                 <!-- dynamic rows -->
               </tbody>
             </table>
@@ -311,6 +845,73 @@
           <!-- Column 1: General and APIs -->
           <div style="display: flex; flex-direction: column; gap: 30px;">
             
+            <!-- Company Profile & GST Settings -->
+            <div class="admin-data-card" style="padding: 25px; border-top: 4px solid var(--accent-gold);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <h3 style="display:flex; align-items:center; gap:8px; margin:0;">
+                  <i class="fa-solid fa-file-invoice" style="color:var(--accent-gold);"></i> Company Legal & GST Profile
+                </h3>
+                <span class="badge" style="background:#e8f5e9; color:#1b5e20; font-size:0.75rem;">Used for Invoices & GSTR</span>
+              </div>
+              <p style="font-size:0.8rem; color:var(--medium-gray); margin-bottom:15px;">Official GSTIN, legal registered trade name, and state code applied to customer invoices and monthly GST reports.</p>
+              
+              <form id="admin-company-gst-form" onsubmit="window.saveCompanyGstSettings(event)" style="display:flex; flex-direction:column; gap:12px;">
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="setting-company-name">Legal Trade / Business Name</label>
+                    <input type="text" id="setting-company-name" class="form-control" placeholder="Coorg Harvest" value="Coorg Harvest" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="setting-company-proprietor">Proprietor / Signatory Name</label>
+                    <input type="text" id="setting-company-proprietor" class="form-control" placeholder="FAABID FAIZAL P M" value="FAABID FAIZAL P M" required>
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="setting-company-gstin">Company GSTIN</label>
+                    <input type="text" id="setting-company-gstin" class="form-control" placeholder="29IJLPM3578P1ZX" value="29IJLPM3578P1ZX" style="text-transform:uppercase; font-weight:600;" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="setting-company-state-code">State Code</label>
+                    <select id="setting-company-state-code" class="form-control">
+                      <option value="29" selected>29 - Karnataka</option>
+                      <option value="32">32 - Kerala</option>
+                      <option value="33">33 - Tamil Nadu</option>
+                      <option value="36">36 - Telangana</option>
+                      <option value="27">27 - Maharashtra</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="setting-company-fssai">FSSAI License No.</label>
+                    <input type="text" id="setting-company-fssai" class="form-control" placeholder="21226110000154" value="21226110000154">
+                  </div>
+                  <div class="form-group">
+                    <label for="setting-company-default-gst">Default Product GST (%)</label>
+                    <input type="number" id="setting-company-default-gst" class="form-control" value="5.0" step="0.5" min="0" max="28">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="setting-company-address">Registered Office Address</label>
+                  <textarea id="setting-company-address" class="form-control" rows="2" placeholder="Bypass Road, Gonikopal, Kodagu - 571213, Karnataka">Bypass Road, Gonikopal, Kodagu - 571213, Karnataka</textarea>
+                </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label for="setting-company-phone">Official Support Phone</label>
+                    <input type="text" id="setting-company-phone" class="form-control" placeholder="+91 9448011290">
+                  </div>
+                  <div class="form-group">
+                    <label for="setting-company-email">Accounts / Billing Email</label>
+                    <input type="email" id="setting-company-email" class="form-control" placeholder="accounts@coorgharvest.com">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:5px;">
+                  Save Legal & GST Profile <i class="fa-solid fa-floppy-disk"></i>
+                </button>
+              </form>
+            </div>
+
             <!-- Shipping & COD Settings -->
             <div class="admin-data-card" style="padding: 25px;">
               <h3>Delivery & Payment Settings</h3>
@@ -407,17 +1008,41 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-            <div class="form-group">
-              <label for="crud-price">Sale Price (₹ INR)</label>
-              <input type="number" id="crud-price" class="form-control" min="1" placeholder="280" required>
-            </div>
-            <div class="form-group">
-              <label for="crud-old-price">Original Price (₹ INR)</label>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 15px; background: #f8faf8; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-old-price" style="font-weight: 600; font-size: 0.8rem;">Regular MRP (₹)</label>
               <input type="number" id="crud-old-price" class="form-control" placeholder="350">
             </div>
-            <div class="form-group">
-              <label for="crud-stock">Stock Quantity</label>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-price" style="font-weight: 600; font-size: 0.8rem; color: var(--primary-green);">Offer / Sale Price (₹)*</label>
+              <input type="number" id="crud-price" class="form-control" min="1" placeholder="280" required>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-cost-price" style="font-weight: 600; font-size: 0.8rem; color: #b45309;">Landed Cost Price (₹)*</label>
+              <input type="number" id="crud-cost-price" class="form-control" min="0" step="0.5" placeholder="140" required>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-gst-rate" style="font-weight: 600; font-size: 0.8rem;">GST Rate (%)*</label>
+              <select id="crud-gst-rate" class="form-control">
+                <option value="0">0% (Nil / Exempted)</option>
+                <option value="5" selected>5% (Spices & Plantation)</option>
+                <option value="12">12% (Processed Goods)</option>
+                <option value="18">18% (Standard Rate)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-gst-type" style="font-weight: 600; font-size: 0.8rem;">GST Pricing Mode*</label>
+              <select id="crud-gst-type" class="form-control">
+                <option value="inclusive" selected>GST Included (MRP)</option>
+                <option value="exclusive">GST Excluded (+ Extra)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-hsn" style="font-weight: 600; font-size: 0.8rem;">HSN Code</label>
+              <input type="text" id="crud-hsn" class="form-control" placeholder="0901 / 0902" maxlength="8">
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="crud-stock" style="font-weight: 600; font-size: 0.8rem;">Live Stock Qty*</label>
               <input type="number" id="crud-stock" class="form-control" min="0" placeholder="50" required>
             </div>
           </div>
@@ -481,9 +1106,9 @@
 
   <!-- MANUAL ORDER EDIT / ADD MODAL FORM -->
   <div class="admin-modal-overlay" id="manual-order-modal-overlay">
-    <div class="admin-modal" style="max-width: 850px; width: 90%;">
+    <div class="admin-modal" style="max-width: 900px; width: 92%;">
       <div class="admin-modal-header">
-        <h3>Create Manual Order</h3>
+        <h3>Create Multi-Channel Order / Invoice</h3>
         <button class="admin-modal-close" onclick="closeManualOrderModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       
@@ -494,10 +1119,25 @@
             <!-- Customer Information Card -->
             <div style="border-right: 1px solid var(--light-gray); padding-right: 20px;">
               <h4 style="color: var(--primary-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-user"></i> Customer Details
+                <i class="fa-solid fa-user"></i> Customer & Sales Channel
               </h4>
+
               <div class="form-group">
-                <label for="manual-cust-name">Full Name</label>
+                <label for="manual-order-channel" style="font-weight:600;">Sales Channel</label>
+                <select id="manual-order-channel" class="form-control" style="border: 2px solid var(--accent-gold); font-weight:600;" onchange="window.handleManualChannelChange()">
+                  <option value="Website">Own Website (Direct Online)</option>
+                  <option value="Amazon">Amazon India (Marketplace)</option>
+                  <option value="Meesho">Meesho (Marketplace)</option>
+                  <option value="Flipkart">Flipkart (Marketplace)</option>
+                  <option value="WhatsApp">WhatsApp Direct Order</option>
+                  <option value="Instagram">Instagram DM / Social Shop</option>
+                  <option value="Store" selected>Walk-in Customer / Madikeri Store</option>
+                  <option value="Phone">Phone Call / Direct Inquiry</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="manual-cust-name">Full Customer Name</label>
                 <input type="text" id="manual-cust-name" class="form-control" placeholder="E.g., John Doe" required>
               </div>
               <div class="form-row-2">
@@ -511,8 +1151,12 @@
                 </div>
               </div>
               <div class="form-group">
+                <label for="manual-cust-gstin">Customer GSTIN (Optional for B2B Invoice)</label>
+                <input type="text" id="manual-cust-gstin" class="form-control" placeholder="E.g., 29ABCDE1234F1Z5" style="text-transform:uppercase;">
+              </div>
+              <div class="form-group">
                 <label for="manual-cust-address">Shipping Address</label>
-                <textarea id="manual-cust-address" class="form-control" rows="3" placeholder="Full delivery address with ZIP/PIN Code..." required></textarea>
+                <textarea id="manual-cust-address" class="form-control" rows="2" placeholder="Full delivery address with ZIP/PIN Code..." required></textarea>
               </div>
               <div class="form-row-2">
                 <div class="form-group">
@@ -520,6 +1164,7 @@
                   <select id="manual-payment-method" class="form-control" onchange="window.toggleManualCodDepositRow()">
                     <option value="UPI">UPI</option>
                     <option value="CARD">Debit/Credit Card</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
                     <option value="COD" selected>Cash on Delivery (COD)</option>
                   </select>
                 </div>
@@ -542,37 +1187,37 @@
             <!-- Items & Calculations Card -->
             <div>
               <h4 style="color: var(--primary-green); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-basket-shopping"></i> Order Items
+                <i class="fa-solid fa-basket-shopping"></i> Order Items & Unit Economics
               </h4>
               
               <!-- Select Product Selector -->
-              <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-end;">
+              <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;">
                 <div style="flex: 1; margin: 0;" class="form-group">
-                  <label for="manual-product-select">Select Product</label>
+                  <label for="manual-product-select" style="font-weight:600;">Select Product to Add</label>
                   <select id="manual-product-select" class="form-control" style="margin: 0;"></select>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="addManualOrderItem()" style="padding: 10px 15px; height: 42px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
-                  Add <i class="fa-solid fa-plus"></i>
+                <button type="button" class="btn btn-primary" onclick="window.addManualOrderItem()" style="padding: 10px 18px; height: 42px; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                  <i class="fa-solid fa-cart-plus"></i> Add +
                 </button>
               </div>
               
               <!-- Added Items List -->
-              <div style="border: 1px solid var(--light-gray); border-radius: 6px; max-height: 180px; overflow-y: auto; padding: 10px; margin-bottom: 15px; background: #fafafa;" id="manual-items-list">
+              <div style="border: 1px solid var(--light-gray); border-radius: 8px; max-height: 180px; overflow-y: auto; padding: 10px; margin-bottom: 15px; background: #fafafa;" id="manual-items-list">
                 <!-- Dynamic Items -->
               </div>
               
               <!-- Financial breakdown -->
-              <div style="background: rgba(46,94,62,0.05); padding: 12px; border-radius: 6px; font-size: 0.9rem;">
+              <div style="background: rgba(46,94,62,0.05); padding: 14px; border-radius: 8px; font-size: 0.85rem; border: 1px solid rgba(46,94,62,0.12);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                  <span>Subtotal:</span>
+                  <span>Product Subtotal:</span>
                   <strong id="manual-lbl-subtotal">₹0.00</strong>
                 </div>
                 
                 <!-- Discount Row -->
                 <div class="form-row-2" style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; margin-bottom: 8px;">
                   <div class="form-group" style="margin: 0;">
-                    <label for="manual-discount-type" style="font-size: 0.8rem; margin-bottom: 2px;">Discount Type</label>
-                    <select id="manual-discount-type" class="form-control" style="padding: 6px; font-size: 0.8rem; border-color: var(--light-gray);" onchange="toggleManualDiscountFields(); recalculateManualOrderTotals();">
+                    <label for="manual-discount-type" style="font-size: 0.75rem; margin-bottom: 2px;">Discount Type</label>
+                    <select id="manual-discount-type" class="form-control" style="padding: 4px 6px; font-size: 0.8rem; border-color: var(--light-gray);" onchange="toggleManualDiscountFields(); recalculateManualOrderTotals();">
                       <option value="none">No Discount</option>
                       <option value="percent">Percentage (%)</option>
                       <option value="fixed">Fixed Flat (₹)</option>
@@ -580,30 +1225,64 @@
                     </select>
                   </div>
                   <div class="form-group" style="margin: 0;" id="manual-discount-val-group">
-                    <label for="manual-discount-value" style="font-size: 0.8rem; margin-bottom: 2px;" id="manual-discount-val-label">Value</label>
-                    <input type="number" id="manual-discount-value" class="form-control" placeholder="0" min="0" style="padding: 6px; font-size: 0.8rem; height: auto;" oninput="recalculateManualOrderTotals()">
+                    <label for="manual-discount-value" style="font-size: 0.75rem; margin-bottom: 2px;" id="manual-discount-val-label">Value</label>
+                    <input type="number" id="manual-discount-value" class="form-control" placeholder="0" min="0" style="padding: 4px 6px; font-size: 0.8rem; height: auto;" oninput="recalculateManualOrderTotals()">
                   </div>
                 </div>
 
                 <!-- Coupon row -->
                 <div id="manual-coupon-row" style="display: none; gap: 8px; margin-bottom: 8px; align-items: center;">
-                  <input type="text" id="manual-coupon-code" class="form-control" placeholder="Promo Coupon..." style="padding: 6px 10px; font-size: 0.8rem; height: auto; text-transform: uppercase;">
-                  <button type="button" class="btn btn-secondary" onclick="applyManualOrderCoupon()" style="padding: 6px 12px; font-size: 0.8rem;">Apply</button>
+                  <input type="text" id="manual-coupon-code" class="form-control" placeholder="Promo Coupon..." style="padding: 4px 8px; font-size: 0.8rem; height: auto; text-transform: uppercase;">
+                  <button type="button" class="btn btn-secondary" onclick="applyManualOrderCoupon()" style="padding: 4px 10px; font-size: 0.8rem;">Apply</button>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--primary-green); display: none;" id="manual-row-discount">
-                  <span>Coupon Discount:</span>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--primary-green); display: none;" id="manual-row-discount">
+                  <span>Discount:</span>
                   <strong id="manual-lbl-discount">-₹0.00</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                  <span>Delivery Charge:</span>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>Customer Shipping Fee:</span>
                   <strong id="manual-lbl-shipping">₹0.00</strong>
                 </div>
-                <hr style="border: 0; border-top: 1px solid var(--light-gray); margin: 8px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: 700; color: var(--primary-green);">
-                  <span>Grand Total:</span>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; color: #64748b;">
+                  <span>Taxable Value / GST (5%):</span>
+                  <span id="manual-lbl-gst-breakdown" style="font-weight: 600;">₹0.00 (₹0.00 GST)</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: 700; color: var(--primary-green); border-top: 1px solid var(--light-gray); padding-top: 6px; margin-top: 6px;">
+                  <span>Customer Invoice Total:</span>
                   <strong id="manual-lbl-total">₹0.00</strong>
                 </div>
+
+                <!-- Unit Cost & Expense Inputs for Accurate Profitability -->
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--light-gray);">
+                  <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--medium-gray); margin-bottom:6px;">Unit Cost & Fulfillment Expenses</div>
+                  <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                    <div>
+                      <label style="font-size:0.7rem; margin-bottom:2px;">Courier Cost (₹)</label>
+                      <input type="number" id="manual-delivery-cost" class="form-control" placeholder="50" min="0" style="padding:4px 6px; font-size:0.8rem;" oninput="recalculateManualOrderTotals()">
+                    </div>
+                    <div>
+                      <label style="font-size:0.7rem; margin-bottom:2px;">Comm / Fee (₹)</label>
+                      <input type="number" id="manual-commission" class="form-control" placeholder="0" min="0" style="padding:4px 6px; font-size:0.8rem;" oninput="recalculateManualOrderTotals()">
+                    </div>
+                    <div>
+                      <label style="font-size:0.7rem; margin-bottom:2px;">Packing (₹)</label>
+                      <input type="number" id="manual-packing-cost" class="form-control" value="15" min="0" style="padding:4px 6px; font-size:0.8rem;" oninput="recalculateManualOrderTotals()">
+                    </div>
+                    <div>
+                      <label style="font-size:0.7rem; margin-bottom:2px;">Other Expense (₹)</label>
+                      <input type="number" id="manual-other-expense" class="form-control" value="0" min="0" style="padding:4px 6px; font-size:0.8rem;" oninput="recalculateManualOrderTotals()">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Live Estimated Net Profit Indicator -->
+                <div style="margin-top:10px; padding:8px 12px; background:#e8f5e9; border-radius:6px; border-left:4px solid var(--primary-green); display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:0.85rem; font-weight:600; color:#1b5e20;">Estimated Net Profit:</span>
+                  <strong id="manual-lbl-net-profit" style="color:#1b5e20; font-size:1.05rem;">₹0.00 (0.0%)</strong>
+                </div>
+
               </div>
             </div>
           </div>
@@ -614,6 +1293,288 @@
       <div class="admin-modal-footer">
         <button class="btn btn-secondary" onclick="closeManualOrderModal()" style="padding:10px 20px;">Cancel</button>
         <button class="btn btn-primary" onclick="saveManualOrder()" style="padding:10px 20px; display: flex; align-items: center; gap: 8px;">Place Order & Download Documents <i class="fa-solid fa-file-arrow-down"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INWARD PURCHASE BILL MODAL -->
+  <div class="admin-modal-overlay" id="purchase-modal-overlay">
+    <div class="admin-modal" style="max-width: 900px; width: 92%;">
+      <div class="admin-modal-header">
+        <h3 style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-truck-ramp-box"></i> Record Inward Purchase Bill
+        </h3>
+        <button class="admin-modal-close" onclick="closePurchaseModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body">
+        <form id="purchase-bill-form" onsubmit="event.preventDefault();">
+          
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:15px;">
+            <div class="form-group">
+              <label for="purchase-vendor-name">Vendor / Supplier Name</label>
+              <input type="text" id="purchase-vendor-name" class="form-control" placeholder="E.g., Kodagu Spices Cultivators" required>
+            </div>
+            <div class="form-group">
+              <label for="purchase-vendor-gstin">Vendor GSTIN</label>
+              <input type="text" id="purchase-vendor-gstin" class="form-control" placeholder="E.g., 29ABCDE1234F1Z5" style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+              <label for="purchase-vendor-phone">Vendor Contact Phone</label>
+              <input type="tel" id="purchase-vendor-phone" class="form-control" placeholder="+91 94480 00000">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px; margin-bottom:20px;">
+            <div class="form-group">
+              <label for="purchase-invoice-no">Vendor Invoice / Bill No</label>
+              <input type="text" id="purchase-invoice-no" class="form-control" placeholder="E.g., INV-2026-081" required>
+            </div>
+            <div class="form-group">
+              <label for="purchase-date">Bill Date</label>
+              <input type="date" id="purchase-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="purchase-payment-status">Payment Status</label>
+              <select id="purchase-payment-status" class="form-control">
+                <option value="Paid" selected>Paid</option>
+                <option value="Pending">Payment Pending</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="purchase-payment-method">Payment Mode</label>
+              <select id="purchase-payment-method" class="form-control">
+                <option value="Bank Transfer" selected>Bank Transfer (NEFT/RTGS)</option>
+                <option value="UPI">UPI</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Inward Items Table -->
+          <div style="margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <h4 style="color:var(--primary-green); margin:0;"><i class="fa-solid fa-boxes-stacked"></i> Inward Stock Items & Costing</h4>
+              <button type="button" class="btn btn-secondary" onclick="addPurchaseItemRow()" style="font-size:0.8rem; padding:6px 12px;">
+                + Add Item Line
+              </button>
+            </div>
+            
+            <div class="admin-table-wrapper" style="border:1px solid var(--light-gray); border-radius:6px;">
+              <table class="admin-table" style="font-size:0.85rem;">
+                <thead>
+                  <tr>
+                    <th style="min-width:240px;">Product / Sourced Item</th>
+                    <th>HSN</th>
+                    <th style="width:80px;">Qty</th>
+                    <th style="width:105px;">Unit Cost (₹)</th>
+                    <th style="width:125px;">Tax Mode</th>
+                    <th style="width:85px;">GST %</th>
+                    <th>Taxable (₹)</th>
+                    <th>Tax (₹)</th>
+                    <th>Total (₹)</th>
+                    <th style="width:40px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="purchase-items-table-body">
+                  <!-- dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px; align-items:flex-start;">
+            <div class="form-group">
+              <label for="purchase-notes">Notes / Batch Remarks</label>
+              <textarea id="purchase-notes" class="form-control" rows="3" placeholder="Batch codes, harvest notes, packaging quality..."></textarea>
+            </div>
+            <div style="background:#f9f9f9; padding:15px; border-radius:6px; border:1px solid var(--light-gray);">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span>Taxable Amount:</span>
+                <strong id="purchase-lbl-subtotal">₹0.00</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:var(--accent-gold);">
+                <span>Total Input GST (ITC):</span>
+                <strong id="purchase-lbl-tax">₹0.00</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:0.85rem;">Other Expenses / Freight:</span>
+                <input type="number" id="purchase-other-expenses" class="form-control" value="0" min="0" step="0.5" style="width:105px; text-align:right; padding:3px 6px; font-size:0.85rem;" oninput="recalculatePurchaseTotals()">
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; color:var(--primary-green); border-top:1px solid #ddd; padding-top:8px; margin-top:8px;">
+                <span>Total Bill Amount:</span>
+                <strong id="purchase-lbl-total">₹0.00</strong>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closePurchaseModal()" style="padding:10px 20px;">Cancel</button>
+        <button class="btn btn-primary" onclick="savePurchaseBill()" style="padding:10px 20px; display:flex; align-items:center; gap:8px;">
+          Save Bill & Add Stock <i class="fa-solid fa-floppy-disk"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAMAGED STOCK LOG MODAL -->
+  <div class="admin-modal-overlay" id="damaged-stock-modal-overlay">
+    <div class="admin-modal" style="max-width: 600px; width: 90%;">
+      <div class="admin-modal-header">
+        <h3 style="color:var(--red); display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Log Damaged / Lost Stock
+        </h3>
+        <button class="admin-modal-close" onclick="closeDamagedStockModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body">
+        <form id="damaged-stock-form" onsubmit="event.preventDefault();">
+          
+          <div class="form-group">
+            <label for="damage-product-select">Select Product</label>
+            <select id="damage-product-select" class="form-control" onchange="window.updateDamageProductCost()" required>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="damage-qty">Damaged Quantity</label>
+              <input type="number" id="damage-qty" class="form-control" min="1" value="1" oninput="window.recalculateDamageTotal()" required>
+            </div>
+            <div class="form-group">
+              <label for="damage-unit-cost">Unit Cost Price (₹)</label>
+              <input type="number" id="damage-unit-cost" class="form-control" min="0" step="0.01" oninput="window.recalculateDamageTotal()" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="damage-reason">Reason Category</label>
+              <select id="damage-reason" class="form-control">
+                <option value="Transit Damage (Courier)">Transit Damage (Courier)</option>
+                <option value="Customer Return Damaged">Customer Return Damaged</option>
+                <option value="Expired / Batch Spoilage">Expired / Batch Spoilage</option>
+                <option value="Warehouse Handling Damage">Warehouse Handling Damage</option>
+                <option value="Packaging Defect">Packaging Defect</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="damage-date">Incident / Audit Date</label>
+              <input type="date" id="damage-date" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="damage-notes">Detailed Incident Notes</label>
+            <textarea id="damage-notes" class="form-control" rows="2" placeholder="Explain how damage occurred, courier claim ref, or inspection findings..."></textarea>
+          </div>
+
+          <div style="background:#fde8e8; padding:12px 16px; border-radius:6px; border-left:4px solid var(--red); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:600; color:var(--red);">Total Inventory Financial Loss:</span>
+            <strong id="damage-lbl-total-loss" style="font-size:1.15rem; color:var(--red);">₹0.00</strong>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closeDamagedStockModal()" style="padding:10px 20px;">Cancel</button>
+        <button class="btn btn-primary" onclick="saveDamagedStockEntry()" style="background:var(--red); border-color:var(--red); padding:10px 20px; display:flex; align-items:center; gap:8px;">
+          Confirm Loss & Deduct Stock <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER P&L UNIT ECONOMICS BREAKDOWN MODAL -->
+  <div class="admin-modal-overlay" id="order-pnl-modal-overlay">
+    <div class="admin-modal" style="max-width: 650px; width: 90%;">
+      <div class="admin-modal-header">
+        <h3 style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-scale-balanced"></i> Order Unit Economics & P&L Breakdown
+        </h3>
+        <button class="admin-modal-close" onclick="closeOrderPnLModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body" id="order-pnl-modal-content">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closeOrderPnLModal()" style="padding:10px 20px;">Close Window</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESS CUSTOMER RETURN MODAL -->
+  <div class="admin-modal-overlay" id="order-return-modal-overlay">
+    <div class="admin-modal" style="max-width: 700px; width: 90%;">
+      <div class="admin-modal-header">
+        <h3 style="color:#e67e22; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-arrow-rotate-left"></i> Process Customer Return / RTO
+        </h3>
+        <button class="admin-modal-close" onclick="closeOrderReturnModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="admin-modal-body">
+        <form id="order-return-form" onsubmit="event.preventDefault();">
+          <input type="hidden" id="return-order-id">
+          
+          <div style="background:#fef9e7; padding:12px; border-radius:6px; margin-bottom:15px; border-left:4px solid #f39c12;">
+            <div style="font-weight:600; font-size:0.95rem;" id="return-lbl-order-info">Order #CH-XXXX - Customer Name</div>
+            <div style="font-size:0.8rem; color:var(--medium-gray); margin-top:2px;" id="return-lbl-order-total">Original Sale: ₹0.00</div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="return-reason">Return Reason</label>
+              <select id="return-reason" class="form-control">
+                <option value="Customer Rejected on Delivery (RTO)">Customer Rejected on Delivery (RTO)</option>
+                <option value="Customer Return - Damaged in Transit">Customer Return - Damaged in Transit</option>
+                <option value="Customer Return - Wrong Product Sent">Customer Return - Wrong Product Sent</option>
+                <option value="Customer Return - Quality Dislike">Customer Return - Quality Dislike</option>
+                <option value="Defective Seal / Leakage">Defective Seal / Leakage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="return-cost">Return Shipping / RTO Courier Fee (₹)</label>
+              <input type="number" id="return-cost" class="form-control" value="60" min="0" oninput="window.recalculateReturnLoss()">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight:600; margin-bottom:8px;">Item Condition & Restock Decision</label>
+            <div id="return-items-selection-list" style="border:1px solid var(--light-gray); border-radius:6px; padding:10px; max-height:180px; overflow-y:auto; background:#fafafa;">
+              <!-- Dynamic checkboxes for each product in order -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="return-notes">Return Audit Notes</label>
+            <textarea id="return-notes" class="form-control" rows="2" placeholder="Condition of seals, package tracking number, notes..."></textarea>
+          </div>
+
+          <div style="background:#fbeee6; padding:12px 16px; border-radius:6px; border-left:4px solid #e67e22; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-weight:600; color:#d35400;">Total Return Financial Loss:</span>
+              <div style="font-size:0.75rem; color:#d35400;">Includes return shipping fee + cost of damaged/unrestocked items</div>
+            </div>
+            <strong id="return-lbl-total-loss" style="font-size:1.15rem; color:#d35400;">₹0.00</strong>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="btn btn-secondary" onclick="closeOrderReturnModal()" style="padding:10px 20px;">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmOrderReturn()" style="background:#e67e22; border-color:#e67e22; padding:10px 20px; display:flex; align-items:center; gap:8px;">
+          Confirm Return & Restock <i class="fa-solid fa-check"></i>
+        </button>
       </div>
     </div>
   </div>

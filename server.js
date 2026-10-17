@@ -537,6 +537,7 @@ async function createTables() {
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       price DECIMAL(10, 2) NOT NULL,
+      costPrice DECIMAL(10, 2) DEFAULT 0,
       oldPrice DECIMAL(10, 2),
       rating DECIMAL(3, 2),
       ratingCount INT,
@@ -550,7 +551,9 @@ async function createTables() {
       origin VARCHAR(255),
       stock INT DEFAULT 0,
       badge VARCHAR(255),
-      reviews JSON
+      reviews JSON,
+      gstRate DECIMAL(5, 2) DEFAULT 5.00,
+      hsnCode VARCHAR(50) DEFAULT '0904'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
@@ -579,7 +582,55 @@ async function createTables() {
       paymentMethod VARCHAR(50),
       status VARCHAR(50),
       trackingId VARCHAR(255),
-      couponCode VARCHAR(255)
+      couponCode VARCHAR(255),
+      channel VARCHAR(100) DEFAULT 'Website',
+      costPrice DECIMAL(10, 2) DEFAULT 0,
+      deliveryCost DECIMAL(10, 2) DEFAULT 0,
+      commission DECIMAL(10, 2) DEFAULT 0,
+      packingCost DECIMAL(10, 2) DEFAULT 0,
+      netProfit DECIMAL(10, 2) DEFAULT 0,
+      isReturned TINYINT(1) DEFAULT 0,
+      returnCost DECIMAL(10, 2) DEFAULT 0,
+      returnLoss DECIMAL(10, 2) DEFAULT 0,
+      customerGstin VARCHAR(50) DEFAULT NULL,
+      gstRate DECIMAL(5, 2) DEFAULT 5.00,
+      taxableAmount DECIMAL(10, 2) DEFAULT 0,
+      cgst DECIMAL(10, 2) DEFAULT 0,
+      sgst DECIMAL(10, 2) DEFAULT 0,
+      igst DECIMAL(10, 2) DEFAULT 0,
+      metaData JSON DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS purchases (
+      id VARCHAR(255) PRIMARY KEY,
+      invoiceNo VARCHAR(255) NOT NULL,
+      vendorName VARCHAR(255) NOT NULL,
+      vendorGstin VARCHAR(50),
+      vendorPhone VARCHAR(50),
+      date VARCHAR(100) NOT NULL,
+      items JSON NOT NULL,
+      subtotal DECIMAL(10, 2) NOT NULL,
+      taxAmount DECIMAL(10, 2) NOT NULL,
+      totalAmount DECIMAL(10, 2) NOT NULL,
+      paymentStatus VARCHAR(50) DEFAULT 'Paid',
+      paymentMethod VARCHAR(50) DEFAULT 'Bank Transfer',
+      notes TEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS damaged_stock (
+      id VARCHAR(255) PRIMARY KEY,
+      productId VARCHAR(255) NOT NULL,
+      productName VARCHAR(255) NOT NULL,
+      qty INT NOT NULL,
+      unitCost DECIMAL(10, 2) NOT NULL,
+      totalLoss DECIMAL(10, 2) NOT NULL,
+      reason VARCHAR(255) NOT NULL,
+      date VARCHAR(100) NOT NULL,
+      notes TEXT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
@@ -605,12 +656,36 @@ async function createTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
-  // Migration: Add couponCode column to orders table if it doesn't exist yet
-  try {
-    await db.query('ALTER TABLE orders ADD COLUMN couponCode VARCHAR(255) NULL');
-  } catch (err) {
-    // Column already exists, safe to ignore
-  }
+  // Safe Column Migrations for existing deployments
+  const addColumnSafe = async (table, col, def) => {
+    try {
+      await db.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+    } catch (err) {
+      // ER_DUP_FIELDNAME / column already exists
+    }
+  };
+
+  await addColumnSafe('orders', 'couponCode', 'VARCHAR(255) NULL');
+  await addColumnSafe('orders', 'channel', "VARCHAR(100) DEFAULT 'Website'");
+  await addColumnSafe('orders', 'costPrice', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'deliveryCost', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'commission', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'packingCost', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'netProfit', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'isReturned', "TINYINT(1) DEFAULT 0");
+  await addColumnSafe('orders', 'returnCost', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'returnLoss', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'customerGstin', "VARCHAR(50) DEFAULT NULL");
+  await addColumnSafe('orders', 'gstRate', "DECIMAL(5,2) DEFAULT 5.00");
+  await addColumnSafe('orders', 'taxableAmount', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'cgst', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'sgst', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'igst', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('orders', 'metaData', "JSON DEFAULT NULL");
+
+  await addColumnSafe('products', 'costPrice', "DECIMAL(10,2) DEFAULT 0");
+  await addColumnSafe('products', 'gstRate', "DECIMAL(5,2) DEFAULT 5.00");
+  await addColumnSafe('products', 'hsnCode', "VARCHAR(50) DEFAULT '0904'");
 }
 
 async function seedDatabase() {
@@ -743,6 +818,129 @@ async function seedDatabase() {
     }
   }
 
+  // Seed Purchases if empty
+  const [purchasesCount] = await db.query('SELECT COUNT(*) as count FROM purchases');
+  if (purchasesCount[0].count === 0) {
+    console.log('🌱 Seeding initial sample purchase invoices...');
+    const seedPurchases = [
+      {
+        id: "PUR-2026-001",
+        invoiceNo: "MV-EST-492",
+        vendorName: "Misty Valley Plantation Farmers Collective",
+        vendorGstin: "29AABCM1948Q1Z3",
+        vendorPhone: "+91 9448011290",
+        date: "2026-10-02, 11:30 AM",
+        items: [
+          { productId: "coffee-almond", productName: "Coorg Almond Coffee", qty: 20, unitCost: 190, gstRate: 5, taxableAmount: 3800, cgst: 95, sgst: 95, igst: 0, totalAmount: 3990 },
+          { productId: "coffee-caramel", productName: "Coorg Caramel Coffee", qty: 25, unitCost: 195, gstRate: 5, taxableAmount: 4875, cgst: 121.88, sgst: 121.87, igst: 0, totalAmount: 5118.75 }
+        ],
+        subtotal: 8675.00,
+        taxAmount: 433.75,
+        totalAmount: 9108.75,
+        paymentStatus: "Paid",
+        paymentMethod: "Bank Transfer",
+        notes: "Direct procurement of freshly roasted single-estate coffee lots."
+      },
+      {
+        id: "PUR-2026-002",
+        invoiceNo: "KOD-ORG-810",
+        vendorName: "Kodagu Organic Growers Society, Madikeri",
+        vendorGstin: "29AAACK3921P1ZP",
+        vendorPhone: "+91 9880291044",
+        date: "2026-10-08, 02:15 PM",
+        items: [
+          { productId: "teas-ginger", productName: "Coorg Ginger Tea", qty: 30, unitCost: 120, gstRate: 5, taxableAmount: 3600, cgst: 90, sgst: 90, igst: 0, totalAmount: 3780 },
+          { productId: "teas-masala", productName: "Coorg Masala Tea", qty: 35, unitCost: 125, gstRate: 5, taxableAmount: 4375, cgst: 109.38, sgst: 109.37, igst: 0, totalAmount: 4593.75 }
+        ],
+        subtotal: 7975.00,
+        taxAmount: 398.75,
+        totalAmount: 8373.75,
+        paymentStatus: "Paid",
+        paymentMethod: "NEFT",
+        notes: "Certified organic estate tea lots, monsoon batch."
+      }
+    ];
+    for (const p of seedPurchases) {
+      await db.query(
+        `INSERT INTO purchases (id, invoiceNo, vendorName, vendorGstin, vendorPhone, date, items, subtotal, taxAmount, totalAmount, paymentStatus, paymentMethod, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [p.id, p.invoiceNo, p.vendorName, p.vendorGstin, p.vendorPhone, p.date, JSON.stringify(p.items), p.subtotal, p.taxAmount, p.totalAmount, p.paymentStatus, p.paymentMethod, p.notes]
+      );
+    }
+  }
+
+  // Seed Damaged Stock if empty
+  const [damagedCount] = await db.query('SELECT COUNT(*) as count FROM damaged_stock');
+  if (damagedCount[0].count === 0) {
+    console.log('🌱 Seeding sample damaged stock...');
+    await db.query(
+      `INSERT INTO damaged_stock (id, productId, productName, qty, unitCost, totalLoss, reason, date, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        "DMG-2026-001", "coffee-caramel", "Coorg Caramel Coffee", 2, 195.00, 390.00,
+        "Transit Damage", "2026-10-10, 04:30 PM", "Glass container cracked during courier transport."
+      ]
+    );
+  }
+
+  // Seed sample Amazon order if none
+  const [amazonOrder] = await db.query('SELECT COUNT(*) as count FROM orders WHERE channel = "Amazon"');
+  if (amazonOrder[0].count === 0) {
+    const sampleAmazonOrder = {
+      id: "AZ-2026-7819",
+      date: "2026-10-12, 11:20 AM",
+      name: "Vikram Nambiar",
+      phone: "+91 9741289012",
+      email: "vikram.nambiar@gmail.com",
+      address: "Flat 402, Green Acre Heights, Indiranagar, Bangalore, Karnataka - 560038",
+      items: [
+        { id: "coffee-almond", name: "Coorg Almond Coffee", price: 380, qty: 1, costPrice: 190, category: "Coffee Collection" }
+      ],
+      subtotal: 380,
+      discount: 0,
+      shipping: 70,
+      total: 450,
+      paymentMethod: "Amazon Pay Prepaid",
+      status: "Delivered",
+      trackingId: "ATS-IN-9812739",
+      channel: "Amazon",
+      costPrice: 190.00,
+      deliveryCost: 65.00,
+      commission: 57.00,
+      packingCost: 15.00,
+      netProfit: 123.00,
+      isReturned: 0,
+      returnCost: 0,
+      returnLoss: 0,
+      customerGstin: "",
+      gstRate: 5.00,
+      taxableAmount: 361.90,
+      cgst: 9.05,
+      sgst: 9.05,
+      igst: 0,
+      metaData: JSON.stringify({ amazonOrderId: "408-9821039-1829103" })
+    };
+    await db.query(
+      `INSERT INTO orders (
+        id, date, name, phone, email, address, items, subtotal, discount, shipping, total,
+        paymentMethod, status, trackingId, couponCode, channel, costPrice, deliveryCost,
+        commission, packingCost, netProfit, isReturned, returnCost, returnLoss,
+        customerGstin, gstRate, taxableAmount, cgst, sgst, igst, metaData
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        sampleAmazonOrder.id, sampleAmazonOrder.date, sampleAmazonOrder.name, sampleAmazonOrder.phone,
+        sampleAmazonOrder.email, sampleAmazonOrder.address, JSON.stringify(sampleAmazonOrder.items),
+        sampleAmazonOrder.subtotal, sampleAmazonOrder.discount, sampleAmazonOrder.shipping, sampleAmazonOrder.total,
+        sampleAmazonOrder.paymentMethod, sampleAmazonOrder.status, sampleAmazonOrder.trackingId, null,
+        sampleAmazonOrder.channel, sampleAmazonOrder.costPrice, sampleAmazonOrder.deliveryCost,
+        sampleAmazonOrder.commission, sampleAmazonOrder.packingCost, sampleAmazonOrder.netProfit,
+        sampleAmazonOrder.isReturned, sampleAmazonOrder.returnCost, sampleAmazonOrder.returnLoss,
+        sampleAmazonOrder.customerGstin, sampleAmazonOrder.gstRate, sampleAmazonOrder.taxableAmount,
+        sampleAmazonOrder.cgst, sampleAmazonOrder.sgst, sampleAmazonOrder.igst, sampleAmazonOrder.metaData
+      ]
+    );
+  }
+
   // Mark database as seeded
   await db.query('INSERT INTO settings (setting_key, setting_value) VALUES ("database_seeded", "true") ON DUPLICATE KEY UPDATE setting_value = "true"');
 }
@@ -761,14 +959,19 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
   try {
     const [productsRows] = await db.query('SELECT * FROM products');
     const [couponsRows] = await db.query('SELECT * FROM coupons');
-    const [ordersRows] = await db.query('SELECT * FROM orders');
+    const [ordersRows] = await db.query('SELECT * FROM orders ORDER BY id DESC');
     const [logsRows] = await db.query('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 50');
     const [categoriesRows] = await db.query('SELECT * FROM categories');
+    const [purchasesRows] = await db.query('SELECT * FROM purchases ORDER BY id DESC');
+    const [damagedRows] = await db.query('SELECT * FROM damaged_stock ORDER BY id DESC');
 
     // Parse JSON columns back to arrays/objects
     const products = productsRows.map(p => ({
       ...p,
       price: parseFloat(p.price),
+      costPrice: parseFloat(p.costPrice || 0),
+      gstRate: parseFloat(p.gstRate || 5.00),
+      hsnCode: p.hsnCode || '0904',
       oldPrice: p.oldPrice ? parseFloat(p.oldPrice) : null,
       rating: parseFloat(p.rating),
       images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
@@ -784,11 +987,42 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
 
     const orders = ordersRows.map(o => ({
       ...o,
-      subtotal: parseFloat(o.subtotal),
-      discount: parseFloat(o.discount),
-      shipping: parseFloat(o.shipping),
-      total: parseFloat(o.total),
-      items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+      subtotal: parseFloat(o.subtotal || 0),
+      discount: parseFloat(o.discount || 0),
+      shipping: parseFloat(o.shipping || 0),
+      total: parseFloat(o.total || 0),
+      channel: o.channel || 'Website',
+      costPrice: parseFloat(o.costPrice || 0),
+      deliveryCost: parseFloat(o.deliveryCost || 0),
+      commission: parseFloat(o.commission || 0),
+      packingCost: parseFloat(o.packingCost || 0),
+      netProfit: parseFloat(o.netProfit || 0),
+      isReturned: !!o.isReturned,
+      returnCost: parseFloat(o.returnCost || 0),
+      returnLoss: parseFloat(o.returnLoss || 0),
+      customerGstin: o.customerGstin || '',
+      gstRate: parseFloat(o.gstRate || 5.00),
+      taxableAmount: parseFloat(o.taxableAmount || 0),
+      cgst: parseFloat(o.cgst || 0),
+      sgst: parseFloat(o.sgst || 0),
+      igst: parseFloat(o.igst || 0),
+      metaData: typeof o.metaData === 'string' ? JSON.parse(o.metaData) : (o.metaData || {}),
+      items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || [])
+    }));
+
+    const purchases = purchasesRows.map(p => ({
+      ...p,
+      subtotal: parseFloat(p.subtotal || 0),
+      taxAmount: parseFloat(p.taxAmount || 0),
+      totalAmount: parseFloat(p.totalAmount || 0),
+      items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || [])
+    }));
+
+    const damagedStock = damagedRows.map(d => ({
+      ...d,
+      qty: parseInt(d.qty || 0),
+      unitCost: parseFloat(d.unitCost || 0),
+      totalLoss: parseFloat(d.totalLoss || 0)
     }));
 
     const [settingsRows] = await db.query('SELECT * FROM settings');
@@ -797,7 +1031,16 @@ app.get('/api/db-sync', checkDB, async (req, res) => {
       return acc;
     }, {});
 
-    res.json({ products, coupons, orders, logs: logsRows, categories: categoriesRows, settings });
+    res.json({
+      products,
+      coupons,
+      orders,
+      logs: logsRows,
+      categories: categoriesRows,
+      settings,
+      purchases,
+      damagedStock
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -808,11 +1051,11 @@ app.post('/api/products', checkDB, async (req, res) => {
   try {
     const p = req.body;
     await db.query(
-      'INSERT INTO products (id, name, price, oldPrice, rating, ratingCount, category, image, images, description, ingredients, benefits, `usage`, origin, stock, badge, reviews) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, price, costPrice, oldPrice, rating, ratingCount, category, image, images, description, ingredients, benefits, `usage`, origin, stock, badge, reviews, gstRate, hsnCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
-        p.id, p.name, p.price, p.oldPrice, p.rating, p.ratingCount, p.category, p.image,
+        p.id, p.name, p.price, p.costPrice || 0, p.oldPrice, p.rating, p.ratingCount, p.category, p.image,
         JSON.stringify(p.images || []), p.description, JSON.stringify(p.ingredients || []), JSON.stringify(p.benefits || []),
-        p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews || [])
+        p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews || []), p.gstRate || 5.0, p.hsnCode || '0904'
       ]
     );
     res.json({ success: true });
@@ -826,11 +1069,11 @@ app.put('/api/products/:id', checkDB, async (req, res) => {
     const { id } = req.params;
     const p = req.body;
     await db.query(
-      'UPDATE products SET name=?, price=?, oldPrice=?, rating=?, ratingCount=?, category=?, image=?, images=?, description=?, ingredients=?, benefits=?, `usage`=?, origin=?, stock=?, badge=?, reviews=? WHERE id=?',
+      'UPDATE products SET name=?, price=?, costPrice=?, oldPrice=?, rating=?, ratingCount=?, category=?, image=?, images=?, description=?, ingredients=?, benefits=?, `usage`=?, origin=?, stock=?, badge=?, reviews=?, gstRate=?, hsnCode=? WHERE id=?',
       [
-        p.name, p.price, p.oldPrice, p.rating, p.ratingCount, p.category, p.image,
+        p.name, p.price, p.costPrice || 0, p.oldPrice, p.rating, p.ratingCount, p.category, p.image,
         JSON.stringify(p.images || []), p.description, JSON.stringify(p.ingredients || []), JSON.stringify(p.benefits || []),
-        p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews || []), id
+        p.usage, p.origin, p.stock, p.badge, JSON.stringify(p.reviews || []), p.gstRate || 5.0, p.hsnCode || '0904', id
       ]
     );
     res.json({ success: true });
@@ -951,19 +1194,89 @@ app.post('/api/orders', checkDB, async (req, res) => {
 
     // Save order
     await connection.query(
-      'INSERT INTO orders (id, date, name, phone, email, address, items, subtotal, discount, shipping, total, paymentMethod, status, trackingId, couponCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO orders (
+        id, date, name, phone, email, address, items, subtotal, discount, shipping, total,
+        paymentMethod, status, trackingId, couponCode, channel, costPrice, deliveryCost,
+        commission, packingCost, netProfit, isReturned, returnCost, returnLoss,
+        customerGstin, gstRate, taxableAmount, cgst, sgst, igst, metaData
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        o.id, o.date, o.name, o.phone, o.email, o.address, JSON.stringify(o.items),
-        o.subtotal, o.discount, o.shipping, o.total, o.paymentMethod, o.status, o.trackingId, o.couponCode || null
+        o.id, o.date, o.name, o.phone, o.email || '', o.address, JSON.stringify(o.items || []),
+        o.subtotal || 0, o.discount || 0, o.shipping || 0, o.total || 0,
+        o.paymentMethod || 'UPI', o.status || 'Paid', o.trackingId || '', o.couponCode || null,
+        o.channel || 'Website', o.costPrice || 0, o.deliveryCost || 0,
+        o.commission || 0, o.packingCost || 0, o.netProfit || 0,
+        o.isReturned ? 1 : 0, o.returnCost || 0, o.returnLoss || 0,
+        o.customerGstin || null, o.gstRate || 5.0, o.taxableAmount || 0,
+        o.cgst || 0, o.sgst || 0, o.igst || 0,
+        JSON.stringify(o.metaData || {})
       ]
     );
 
     // Update product stock counts
-    for (const item of o.items) {
+    for (const item of (o.items || [])) {
       await connection.query(
         'UPDATE products SET stock = GREATEST(0, stock - ?) WHERE id = ?',
-        [item.qty, item.id]
+        [item.qty || 1, item.id]
       );
+    }
+
+    await connection.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.put('/api/orders/:id', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const o = req.body;
+    await db.query(
+      `UPDATE orders SET 
+        name=?, phone=?, email=?, address=?, subtotal=?, discount=?, shipping=?, total=?,
+        paymentMethod=?, status=?, trackingId=?, channel=?, costPrice=?, deliveryCost=?,
+        commission=?, packingCost=?, netProfit=?, customerGstin=?, gstRate=?, taxableAmount=?,
+        cgst=?, sgst=?, igst=?
+       WHERE id=?`,
+      [
+        o.name, o.phone, o.email || '', o.address, o.subtotal || 0, o.discount || 0, o.shipping || 0, o.total || 0,
+        o.paymentMethod || 'UPI', o.status, o.trackingId || '', o.channel || 'Website',
+        o.costPrice || 0, o.deliveryCost || 0, o.commission || 0, o.packingCost || 0, o.netProfit || 0,
+        o.customerGstin || null, o.gstRate || 5.0, o.taxableAmount || 0, o.cgst || 0, o.sgst || 0, o.igst || 0, id
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/orders/:id/return', checkDB, async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { id } = req.params;
+    const { returnCost, returnLoss, restockItems, returnReason, notes } = req.body;
+
+    await connection.query(
+      `UPDATE orders SET isReturned = 1, status = 'Returned', returnCost = ?, returnLoss = ?, 
+       netProfit = netProfit - ?, metaData = JSON_SET(COALESCE(metaData, '{}'), '$.returnReason', ?, '$.returnNotes', ?) 
+       WHERE id = ?`,
+      [returnCost || 0, returnLoss || 0, returnLoss || 0, returnReason || 'Customer Return', notes || '', id]
+    );
+
+    // If items were restocked (good condition), increment stock back
+    if (restockItems && Array.isArray(restockItems)) {
+      for (const item of restockItems) {
+        await connection.query(
+          'UPDATE products SET stock = stock + ? WHERE id = ?',
+          [item.qty || 1, item.id]
+        );
+      }
     }
 
     await connection.commit();
@@ -1002,6 +1315,146 @@ app.put('/api/orders/:id/tracking', checkDB, async (req, res) => {
     const { id } = req.params;
     const { trackingId } = req.body;
     await db.query('UPDATE orders SET trackingId=? WHERE id=?', [trackingId, id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.1. PURCHASES ENDPOINTS (CRM / INWARD STOCK)
+app.get('/api/purchases', checkDB, async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM purchases ORDER BY id DESC');
+    const purchases = rows.map(p => ({
+      ...p,
+      subtotal: parseFloat(p.subtotal || 0),
+      taxAmount: parseFloat(p.taxAmount || 0),
+      totalAmount: parseFloat(p.totalAmount || 0),
+      items: typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || [])
+    }));
+    res.json(purchases);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/purchases', checkDB, async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const p = req.body;
+
+    await connection.query(
+      `INSERT INTO purchases (id, invoiceNo, vendorName, vendorGstin, vendorPhone, date, items, subtotal, taxAmount, totalAmount, paymentStatus, paymentMethod, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        p.id, p.invoiceNo, p.vendorName, p.vendorGstin || '', p.vendorPhone || '', p.date,
+        JSON.stringify(p.items || []), p.subtotal || 0, p.taxAmount || 0, p.totalAmount || 0,
+        p.paymentStatus || 'Paid', p.paymentMethod || 'Bank Transfer', p.notes || ''
+      ]
+    );
+
+    // Increment product stock for each inward item
+    for (const item of (p.items || [])) {
+      if (item.productId) {
+        await connection.query(
+          'UPDATE products SET stock = stock + ? WHERE id = ?',
+          [item.qty || 0, item.productId]
+        );
+        if (item.unitCost && parseFloat(item.unitCost) > 0) {
+          await connection.query(
+            'UPDATE products SET costPrice = ? WHERE id = ?',
+            [parseFloat(item.unitCost), item.productId]
+          );
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.delete('/api/purchases/:id', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM purchases WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.2. DAMAGED STOCK ENDPOINTS
+app.get('/api/damaged-stock', checkDB, async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM damaged_stock ORDER BY id DESC');
+    const items = rows.map(d => ({
+      ...d,
+      qty: parseInt(d.qty || 0),
+      unitCost: parseFloat(d.unitCost || 0),
+      totalLoss: parseFloat(d.totalLoss || 0)
+    }));
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/damaged-stock', checkDB, async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const d = req.body;
+
+    await connection.query(
+      `INSERT INTO damaged_stock (id, productId, productName, qty, unitCost, totalLoss, reason, date, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        d.id, d.productId, d.productName, d.qty || 1, d.unitCost || 0,
+        d.totalLoss || 0, d.reason || 'Transit Damage', d.date, d.notes || ''
+      ]
+    );
+
+    // Deduct stock from products
+    if (d.productId) {
+      await connection.query(
+        'UPDATE products SET stock = GREATEST(0, stock - ?) WHERE id = ?',
+        [d.qty || 1, d.productId]
+      );
+    }
+
+    await connection.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.delete('/api/damaged-stock/:id', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM damaged_stock WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4.3. STOCK ADJUSTMENT ENDPOINT
+app.put('/api/products/:id/stock', checkDB, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { stock } = req.body;
+    await db.query('UPDATE products SET stock = ? WHERE id = ?', [parseInt(stock) || 0, id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

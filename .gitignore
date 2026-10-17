@@ -48,3 +48,9 @@ Thumbs.db
 tmp/
 temp/
 .temp/
+
+# Raw archives and dump files
+images/*.zip
+images/*.xlsx
+images/*.pdf
+images/WhatsApp Unknown*

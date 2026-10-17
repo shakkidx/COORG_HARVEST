@@ -233,6 +233,14 @@ function injectFooter() {
               <i class="fa-solid fa-envelope"></i>
               <span>info@coorgharvest.com</span>
             </li>
+            <li>
+              <i class="fa-solid fa-certificate" style="color: var(--accent-gold);"></i>
+              <span>FSSAI Lic: 21226110000154</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-file-invoice" style="color: var(--accent-gold);"></i>
+              <span>GSTIN: 29IJLPM3578P1ZX</span>
+            </li>
           </ul>
           
           <div class="trust-badges" style="margin-top: 25px; display: flex; gap: 20px;">

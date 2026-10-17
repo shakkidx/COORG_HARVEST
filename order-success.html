@@ -247,6 +247,43 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       });
     };
 
+    // Helper to load proprietor signature
+    const loadProprietorSignature = () => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (err) {
+            resolve(null);
+          }
+        };
+        img.onerror = () => {
+          const fallback = new Image();
+          fallback.crossOrigin = "anonymous";
+          fallback.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = fallback.width;
+              canvas.height = fallback.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(fallback, 0, 0);
+              resolve(canvas.toDataURL('image/jpeg', 0.9));
+            } catch(e) { resolve(null); }
+          };
+          fallback.onerror = () => resolve(null);
+          fallback.src = 'images/proprietor_signature.jpg';
+        };
+        img.src = 'images/proprietor_signature.png';
+      });
+    };
+
     // CLIENT-SIDE PDF GENERATION USING JSPDF
     window.generateInvoicePDF = async function() {
       if (!activeOrder) return;
@@ -257,8 +294,13 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       const themeColor = "#2E5E3E"; // primary forest green
       const goldColor = "#C5A059";  // accent gold
 
-      // Load Logo
+      // Load Logo & Signature
       const logoBase64 = await loadOriginalLogo();
+      const sigBase64 = await loadProprietorSignature();
+      const settings = (window.CoorgDB && window.CoorgDB.getSettings) ? window.CoorgDB.getSettings() : {};
+      const companyGstin = settings.company_gstin || "29IJLPM3578P1ZX";
+      const companyFssai = settings.company_fssai || "21226110000154";
+      const proprietorName = settings.company_proprietor || "FAABID FAIZAL P M";
 
       // HEADER SECTION (Clean, premium branding)
       if (logoBase64) {
@@ -273,7 +315,7 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
         doc.setFont("helvetica", "italic");
         doc.setFontSize(8.5);
         doc.setTextColor(197, 160, 89); // Gold
-        doc.text("Premium Spices, Teas & Wellness from Kodagu", 40, 24);
+        doc.text("Premium Spices, Plantation Coffee & Wellness from Kodagu", 40, 24);
       } else {
         // Fallback if logo fails
         doc.setTextColor(46, 94, 62);
@@ -284,17 +326,18 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
         doc.setFont("helvetica", "italic");
         doc.setFontSize(9);
         doc.setTextColor(197, 160, 89);
-        doc.text("Premium Spices, Teas & Wellness from Kodagu", 15, 24);
+        doc.text("Premium Spices, Plantation Coffee & Wellness from Kodagu", 15, 24);
       }
 
-      // Company details on the right
+      // Company details on the right - RIGHT ALIGNED TO 195 (No collision!)
       doc.setTextColor(80, 80, 80);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text("Email: info@coorgharvest.com", 145, 13);
-      doc.text("Phone: +91 9880077218", 145, 18);
-      doc.text("Bypass Road, Gonikopal, Kodagu", 145, 23);
-      doc.text("PIN Code: 571213, Karnataka, India", 145, 28);
+      doc.setFontSize(8);
+      doc.text("Email: info@coorgharvest.com", 195, 11, { align: "right" });
+      doc.text("Phone: +91 9880077218", 195, 15.5, { align: "right" });
+      doc.text(`GSTIN: ${companyGstin} (State: 29 - Karnataka)`, 195, 20, { align: "right" });
+      if (companyFssai) doc.text(`FSSAI Lic: ${companyFssai}`, 195, 24.5, { align: "right" });
+      doc.text("Bypass Road, Gonikopal, Kodagu - 571213, Karnataka", 195, 29, { align: "right" });
 
       // Separator Line
       doc.setDrawColor(220, 215, 200);
@@ -305,7 +348,7 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       doc.setTextColor(29, 29, 29);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(15);
-      doc.text("CUSTOMER INVOICE", 15, 52);
+      doc.text("TAX INVOICE", 15, 52);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
@@ -332,10 +375,13 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       
       doc.setFont("helvetica", "bold");
       doc.setTextColor(46, 94, 62);
-      doc.text("Item Sourced Product Name", 18, 100.5);
-      doc.text("Price (INR)", 115, 100.5);
-      doc.text("Qty", 150, 100.5);
-      doc.text("Total (INR)", 172, 100.5);
+      doc.setFontSize(8.5);
+      doc.text("Item / Sourced Product Name", 18, 100.5);
+      doc.text("HSN", 96, 100.5);
+      doc.text("Price (INR)", 114, 100.5);
+      doc.text("Qty", 140, 100.5);
+      doc.text("GST %", 154, 100.5);
+      doc.text("Total (INR)", 173, 100.5);
       
       // Table line
       doc.line(15, 103, 195, 103);
@@ -343,50 +389,125 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
       // 5. TABLE BODY ITEMS
       doc.setFont("helvetica", "normal");
       doc.setTextColor(29, 29, 29);
+      doc.setFontSize(8);
       let currentY = 110;
 
+      let computedTaxable = 0;
+      let computedTotalTax = 0;
+
       activeOrder.items.forEach(item => {
-        doc.text(item.name, 18, currentY);
-        doc.text(`Rs. ${item.price.toFixed(2)}`, 115, currentY);
-        doc.text(item.qty.toString(), 151, currentY);
-        
-        const lineTotal = item.price * item.qty;
-        doc.text(`Rs. ${lineTotal.toFixed(2)}`, 172, currentY);
-        
-        currentY += 8;
+        const prod = (window.CoorgDB && window.CoorgDB.getProductById) ? window.CoorgDB.getProductById(item.id) : null;
+        const hsn = item.hsnCode || (prod && prod.hsnCode) || "0901";
+        const itemGstRate = (item.gstRate !== undefined && item.gstRate !== null)
+          ? parseFloat(item.gstRate)
+          : ((prod && prod.gstRate !== undefined) ? parseFloat(prod.gstRate) : (activeOrder.gstRate || 5.0));
+        const itemGstType = item.gstType || (prod && prod.gstType) || "inclusive";
+        const lineTotal = (item.price || 0) * (item.qty || 1);
+
+        let lineTaxable = 0;
+        let lineTax = 0;
+        if (itemGstType === "exclusive") {
+          lineTaxable = lineTotal;
+          lineTax = lineTotal * (itemGstRate / 100);
+        } else {
+          lineTaxable = lineTotal / (1 + (itemGstRate / 100));
+          lineTax = lineTotal - lineTaxable;
+        }
+        computedTaxable += lineTaxable;
+        computedTotalTax += lineTax;
+
+        const nameLines = doc.splitTextToSize(item.name || 'Item', 74);
+        doc.text(nameLines, 18, currentY);
+        doc.text(hsn.toString(), 96, currentY);
+        doc.text(`Rs. ${(item.price || 0).toFixed(2)}`, 114, currentY);
+        doc.text((item.qty || 1).toString(), 141, currentY);
+        doc.text(`${itemGstRate}%`, 156, currentY);
+        doc.text(`Rs. ${lineTotal.toFixed(2)}`, 173, currentY);
+
+        const step = Math.max(nameLines.length * 4.5, 7.5);
+        currentY += step;
       });
 
       doc.line(15, currentY + 2, 195, currentY + 2);
-      currentY += 12;
+      currentY += 10;
 
-      // 6. PRICING CALCULATIONS (Subtotal, discounts, delivery) - NO TAXES
+      // 6. PRICING CALCULATIONS & GST
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       doc.text("Subtotal:", 125, currentY);
-      doc.text(`Rs. ${activeOrder.subtotal.toFixed(2)}`, 172, currentY);
-      currentY += 6;
+      doc.text(`Rs. ${(activeOrder.subtotal || 0).toFixed(2)}`, 173, currentY);
+      currentY += 5.5;
 
       if (activeOrder.discount > 0) {
         doc.setTextColor(39, 174, 96);
         doc.text("Coupon Discount:", 125, currentY);
-        doc.text(`-Rs. ${activeOrder.discount.toFixed(2)}`, 172, currentY);
+        doc.text(`-Rs. ${(activeOrder.discount || 0).toFixed(2)}`, 173, currentY);
         doc.setTextColor(29, 29, 29);
-        currentY += 6;
+        currentY += 5.5;
       }
 
       doc.text("Delivery Charges:", 125, currentY);
-      doc.text(activeOrder.shipping === 0 ? "FREE" : `Rs. ${activeOrder.shipping.toFixed(2)}`, 172, currentY);
-      currentY += 8;
+      doc.text(activeOrder.shipping === 0 ? "FREE" : `Rs. ${(activeOrder.shipping || 0).toFixed(2)}`, 173, currentY);
+      currentY += 5.5;
 
-      doc.line(125, currentY - 2, 195, currentY - 2);
+      const otherExp = parseFloat(activeOrder.otherExpense || activeOrder.otherExpenses || 0);
+      if (otherExp > 0) {
+        doc.text("Other Expenses / Handling:", 125, currentY);
+        doc.text(`Rs. ${otherExp.toFixed(2)}`, 173, currentY);
+        currentY += 5.5;
+      }
+
+      doc.line(125, currentY - 1, 195, currentY - 1);
 
       // Grand Total
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setTextColor(46, 94, 62);
-      doc.text("Grand Total:", 125, currentY + 3);
-      doc.text(`Rs. ${activeOrder.total.toFixed(2)}`, 172, currentY + 3);
-      currentY += 10;
+      doc.text("Grand Total (Inc. GST):", 125, currentY + 3.5);
+      doc.text(`Rs. ${(activeOrder.total || 0).toFixed(2)}`, 173, currentY + 3.5);
+      currentY += 9;
 
-      if (activeOrder.paymentMethod.toUpperCase() === 'COD') {
+      // Comprehensive GST Breakdown
+      const isInterState = Boolean(activeOrder.customerGstin && !activeOrder.customerGstin.startsWith("29"));
+      const finalTaxable = (activeOrder.taxableAmount !== undefined && activeOrder.taxableAmount !== null)
+        ? parseFloat(activeOrder.taxableAmount)
+        : parseFloat(computedTaxable.toFixed(2));
+      const finalTax = (activeOrder.cgst !== undefined && activeOrder.sgst !== undefined)
+        ? parseFloat((parseFloat(activeOrder.cgst) + parseFloat(activeOrder.sgst) + (parseFloat(activeOrder.igst) || 0)).toFixed(2))
+        : parseFloat(computedTotalTax.toFixed(2));
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(46, 94, 62);
+      doc.text("GST Tax Breakdown:", 125, currentY);
+      currentY += 4.5;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`Total Taxable Value: Rs. ${finalTaxable.toFixed(2)}`, 125, currentY);
+      currentY += 4;
+
+      if (isInterState) {
+        const igstVal = activeOrder.igst !== undefined ? parseFloat(activeOrder.igst).toFixed(2) : finalTax.toFixed(2);
+        doc.text(`IGST (Inter-State): Rs. ${igstVal}`, 125, currentY);
+        currentY += 4;
+      } else {
+        let cgstVal = (finalTax / 2).toFixed(2);
+        let sgstVal = (finalTax / 2).toFixed(2);
+        if (activeOrder.cgst !== undefined && activeOrder.sgst !== undefined) {
+          cgstVal = parseFloat(activeOrder.cgst).toFixed(2);
+          sgstVal = parseFloat(activeOrder.sgst).toFixed(2);
+        }
+        doc.text(`CGST (Intra-State 50%): Rs. ${cgstVal}`, 125, currentY);
+        currentY += 4;
+        doc.text(`SGST (Intra-State 50%): Rs. ${sgstVal}`, 125, currentY);
+        currentY += 4;
+      }
+      doc.text(`Total Tax (GST): Rs. ${finalTax.toFixed(2)}`, 125, currentY);
+      currentY += 6;
+
+      if (activeOrder.paymentMethod && activeOrder.paymentMethod.toUpperCase() === 'COD') {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
         doc.setTextColor(29, 29, 29);
@@ -409,31 +530,53 @@ _Need help? WhatsApp us at +91 9880077218._<span class="whatsapp-msg-time">${cur
         doc.text("*Note: Online COD deposit of Rs. 50.00 is non-refundable.", 15, currentY - 12);
       }
 
-      // 7. VERIFIED BADGE (NO GSTIN)
-      const stampY = currentY - 15;
+      // 7. VERIFIED BADGE ON LEFT & PROPRIETOR SIGNATURE ON RIGHT
+      const stampY = Math.max(currentY + 6, 218);
+      
+      // Left: Verified Seal
       doc.setDrawColor(46, 94, 62);
       doc.setLineWidth(0.4);
-      doc.circle(30, stampY + 12, 10, "S");
+      doc.circle(32, stampY + 12, 10, "S");
       doc.setFontSize(6.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(46, 94, 62);
-      doc.text("VERIFIED", 30, stampY + 10, null, null, "center");
-      doc.text("TRANSACTION", 30, stampY + 13, null, null, "center");
+      doc.text("TAX INVOICE", 32, stampY + 10, null, null, "center");
+      doc.text("VERIFIED", 32, stampY + 13, null, null, "center");
 
-      // 8. SIGNATURE AND TERMS
+      // Right: Proprietor Signature Box
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(46, 94, 62);
+      doc.text("For COORG HARVEST", 165, stampY, { align: "center" });
+
+      if (sigBase64) {
+        doc.addImage(sigBase64, 'PNG', 148, stampY + 2, 34, 16);
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setTextColor(29, 29, 29);
+      doc.text(proprietorName, 165, stampY + 21, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Proprietor / Authorized Signatory", 165, stampY + 25, { align: "center" });
+
+      // Terms & Conditions
       doc.setFontSize(8);
       doc.setTextColor(29, 29, 29);
       doc.setFont("helvetica", "bold");
-      doc.text("Terms & Conditions:", 15, currentY + 28);
+      doc.text("Terms & Conditions:", 15, stampY + 25);
       doc.setFont("helvetica", "normal");
-      doc.text("1. All items are packed fresh under organic standards.", 15, 33 + currentY);
-      doc.text("2. Hand-harvested honey can crystallize naturally.", 15, 37 + currentY);
-      doc.text("3. Grievances can be submitted directly on info@coorgharvest.com.", 15, 41 + currentY);
+      doc.text("1. All items are packed fresh under strict natural standards.", 15, stampY + 29);
+      doc.text("2. Hand-harvested forest honey and spices can vary slightly by batch.", 15, stampY + 33);
+      doc.text("3. Grievances can be submitted directly on info@coorgharvest.com.", 15, stampY + 37);
 
       doc.setFont("helvetica", "italic");
       doc.setTextColor(100, 100, 100);
-      doc.setFontSize(9.5);
-      doc.text("Thank you for supporting Kodagu's small farmers!", 105, 275, null, null, "center");
+      doc.setFontSize(9);
+      doc.text("Thank you for supporting Kodagu's small farmers!", 105, 280, null, null, "center");
 
       // Save PDF
       doc.save(`Invoice_${activeOrder.id}.pdf`);

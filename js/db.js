@@ -7,7 +7,9 @@
     orders: [],
     logs: [],
     categories: [],
-    settings: {}
+    settings: {},
+    purchases: [],
+    damagedStock: []
   };
 
   let initPromise = null;
@@ -28,6 +30,8 @@
             cache.logs = data.logs || [];
             cache.categories = data.categories || [];
             cache.settings = data.settings || {};
+            cache.purchases = data.purchases || [];
+            cache.damagedStock = data.damagedStock || [];
             
             // Sync fallback storage
             localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
@@ -36,6 +40,8 @@
             localStorage.setItem("coorg_harvest_activity_logs", JSON.stringify(cache.logs));
             localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
             localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
+            localStorage.setItem("coorg_harvest_purchases", JSON.stringify(cache.purchases));
+            localStorage.setItem("coorg_harvest_damaged_stock", JSON.stringify(cache.damagedStock));
             
             console.log("🌿 CoorgDB: Sync with Hostinger MySQL Database completed successfully.");
           })
@@ -56,12 +62,28 @@
             }
 
             cache.products = localProducts || getFallbackProducts();
+            cache.products.forEach(p => {
+              if (p.gstType === undefined || !p.gstType) p.gstType = "inclusive";
+              if (p.gstRate === undefined || p.gstRate === null) p.gstRate = 5;
+              if (!p.hsnCode) {
+                const cat = (p.category || '').toLowerCase();
+                if (cat.includes('coffee')) p.hsnCode = "0901";
+                else if (cat.includes('tea')) p.hsnCode = "0902";
+                else if (cat.includes('honey')) p.hsnCode = "0409";
+                else if (cat.includes('spice')) p.hsnCode = "0908";
+                else p.hsnCode = "0910";
+              }
+              if (p.costPrice === undefined || p.costPrice === null) {
+                p.costPrice = Math.round((p.price || 100) * 0.55);
+              }
+            });
             cache.coupons = JSON.parse(localStorage.getItem("coorg_harvest_coupons")) || [
               { code: "COORG20", type: "percent", value: 20, description: "20% off on your entire order!" },
               { code: "FREESHIP", type: "fixed", value: 50, description: "Flat ₹50 discount (equivalent to shipping fee)." },
               { code: "WELCOME10", type: "percent", value: 10, description: "10% discount for first-time buyers." }
             ];
-            cache.orders = JSON.parse(localStorage.getItem("coorg_harvest_orders")) || [];
+            const savedOrders = JSON.parse(localStorage.getItem("coorg_harvest_orders") || "[]");
+            cache.orders = savedOrders.length > 0 ? savedOrders : getFallbackOrders();
             cache.logs = JSON.parse(localStorage.getItem("coorg_harvest_activity_logs")) || [];
             cache.categories = JSON.parse(localStorage.getItem("coorg_harvest_categories")) || [
               { id: "coorg-spices", name: "Coorg Spices" },
@@ -71,8 +93,18 @@
               { id: "wellness-products", name: "Wellness Products" },
               { id: "coorg-specialties", name: "Coorg Specialties" }
             ];
-            cache.settings = JSON.parse(localStorage.getItem("coorg_harvest_settings")) || {
+            const defaultSettings = {
+              company_name: "Coorg Harvest",
+              company_proprietor: "FAABID FAIZAL P M",
+              company_gstin: "29IJLPM3578P1ZX",
+              company_state_code: "29",
+              company_fssai: "21226110000154",
+              company_default_gst: "5.0",
+              company_address: "Bypass Road, Gonikopal, Kodagu - 571213, Karnataka",
+              company_phone: "+91 9880077218",
+              company_email: "info@coorgharvest.com",
               delivery_charge: "50",
+              free_delivery_threshold: "500",
               cod_enabled: "true",
               google_analytics_id: "",
               google_merchant_id: "",
@@ -81,6 +113,26 @@
               delivery_partner_api: "",
               homepage_banners: "[]"
             };
+            const storedSettings = JSON.parse(localStorage.getItem("coorg_harvest_settings") || "{}");
+            cache.settings = { ...defaultSettings, ...storedSettings };
+            // Ensure official brand, proprietor, GSTIN, and FSSAI are clean
+            if (!cache.settings.company_gstin || cache.settings.company_gstin.includes("AAAC")) {
+              cache.settings.company_gstin = "29IJLPM3578P1ZX";
+            }
+            if (!cache.settings.company_name || cache.settings.company_name.includes("Agro")) {
+              cache.settings.company_name = "Coorg Harvest";
+            }
+            if (!cache.settings.company_proprietor) {
+              cache.settings.company_proprietor = "FAABID FAIZAL P M";
+            }
+            if (!cache.settings.company_fssai || cache.settings.company_fssai.includes("11223344")) {
+              cache.settings.company_fssai = "21226110000154";
+            }
+            localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
+            const savedPurchases = JSON.parse(localStorage.getItem("coorg_harvest_purchases") || "[]");
+            cache.purchases = savedPurchases.length > 0 ? savedPurchases : getFallbackPurchases();
+            const savedDamaged = JSON.parse(localStorage.getItem("coorg_harvest_damaged_stock") || "[]");
+            cache.damagedStock = savedDamaged.length > 0 ? savedDamaged : getFallbackDamagedStock();
 
             // Seed fallback storage so subsequent visits are fast and fully loaded
             localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
@@ -89,6 +141,8 @@
             localStorage.setItem("coorg_harvest_activity_logs", JSON.stringify(cache.logs));
             localStorage.setItem("coorg_harvest_categories", JSON.stringify(cache.categories));
             localStorage.setItem("coorg_harvest_settings", JSON.stringify(cache.settings));
+            localStorage.setItem("coorg_harvest_purchases", JSON.stringify(cache.purchases));
+            localStorage.setItem("coorg_harvest_damaged_stock", JSON.stringify(cache.damagedStock));
           });
       }
       return initPromise;
@@ -324,6 +378,187 @@
         });
       } catch (err) {
         console.error("Error deleting order from server database:", err);
+      }
+    },
+    updateOrder: async function(id, updatedOrder) {
+      cache.orders = cache.orders.map(o => o.id === id ? { ...o, ...updatedOrder } : o);
+      localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
+      await this.logActivity(`Updated order details: ${id}`);
+
+      try {
+        await fetch(`/api/orders/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedOrder)
+        });
+      } catch (err) {
+        console.error("Error updating order on server database:", err);
+      }
+    },
+    processOrderReturn: async function(orderId, returnData) {
+      const order = this.getOrderById(orderId);
+      if (!order) return;
+
+      order.isReturned = true;
+      order.status = "Returned";
+      order.returnCost = parseFloat(returnData.returnCost || 0);
+      order.returnLoss = parseFloat(returnData.returnLoss || 0);
+      order.netProfit = (order.netProfit || 0) - order.returnLoss;
+      order.metaData = {
+        ...(order.metaData || {}),
+        returnReason: returnData.returnReason || "Customer Return",
+        returnNotes: returnData.notes || "",
+        returnDate: returnData.date || new Date().toLocaleString()
+      };
+
+      // Restock good items if specified
+      if (returnData.restockItems && Array.isArray(returnData.restockItems)) {
+        returnData.restockItems.forEach(item => {
+          const product = cache.products.find(p => p.id === item.id);
+          if (product) {
+            product.stock = (product.stock || 0) + item.qty;
+          }
+        });
+        localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+      }
+
+      // Add to damaged stock if any item was damaged
+      if (returnData.damagedItems && Array.isArray(returnData.damagedItems)) {
+        for (const d of returnData.damagedItems) {
+          await this.addDamagedStock({
+            id: `DMG-${Date.now().toString().slice(-6)}`,
+            productId: d.id,
+            productName: d.name,
+            qty: d.qty,
+            unitCost: d.costPrice || 0,
+            totalLoss: (d.costPrice || 0) * d.qty,
+            reason: "Customer Return Damaged",
+            date: returnData.date || new Date().toLocaleString(),
+            notes: `Order return ${orderId}: ${returnData.returnReason || ''}`
+          });
+        }
+      }
+
+      localStorage.setItem("coorg_harvest_orders", JSON.stringify(cache.orders));
+      await this.logActivity(`Processed return for order: ${orderId} (Loss: ₹${order.returnLoss})`);
+
+      try {
+        await fetch(`/api/orders/${orderId}/return`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(returnData)
+        });
+      } catch (err) {
+        console.error("Error updating return status on server database:", err);
+      }
+    },
+
+    // 5.5. PURCHASES CRUD (CRM / INWARD STOCK)
+    getPurchases: function() {
+      return cache.purchases || [];
+    },
+    getPurchaseById: function(id) {
+      return (cache.purchases || []).find(p => p.id === id);
+    },
+    addPurchase: async function(purchase) {
+      // Increment product stocks locally
+      (purchase.items || []).forEach(item => {
+        const prod = cache.products.find(p => p.id === item.productId);
+        if (prod) {
+          prod.stock = (prod.stock || 0) + (parseInt(item.qty) || 0);
+          if (item.unitCost && parseFloat(item.unitCost) > 0) {
+            prod.costPrice = parseFloat(item.unitCost);
+          }
+        }
+      });
+      localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+
+      cache.purchases.unshift(purchase);
+      localStorage.setItem("coorg_harvest_purchases", JSON.stringify(cache.purchases));
+      await this.logActivity(`Added purchase bill: ${purchase.invoiceNo} from ${purchase.vendorName}`);
+
+      try {
+        await fetch('/api/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(purchase)
+        });
+      } catch (err) {
+        console.error("Error saving purchase to server database:", err);
+      }
+      return purchase;
+    },
+    deletePurchase: async function(id) {
+      const pur = this.getPurchaseById(id);
+      cache.purchases = (cache.purchases || []).filter(p => p.id !== id);
+      localStorage.setItem("coorg_harvest_purchases", JSON.stringify(cache.purchases));
+      await this.logActivity(`Deleted purchase bill: ${pur?.invoiceNo || id}`);
+
+      try {
+        await fetch(`/api/purchases/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error("Error deleting purchase from server database:", err);
+      }
+    },
+
+    // 5.6. DAMAGED STOCK CRUD
+    getDamagedStock: function() {
+      return cache.damagedStock || [];
+    },
+    addDamagedStock: async function(damageData) {
+      // Deduct product stock locally
+      const prod = cache.products.find(p => p.id === damageData.productId);
+      if (prod) {
+        prod.stock = Math.max(0, (prod.stock || 0) - (parseInt(damageData.qty) || 1));
+        localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+      }
+
+      cache.damagedStock.unshift(damageData);
+      localStorage.setItem("coorg_harvest_damaged_stock", JSON.stringify(cache.damagedStock));
+      await this.logActivity(`Logged damaged stock: ${damageData.qty}x ${damageData.productName} (${damageData.reason})`);
+
+      try {
+        await fetch('/api/damaged-stock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(damageData)
+        });
+      } catch (err) {
+        console.error("Error saving damaged stock to server database:", err);
+      }
+      return damageData;
+    },
+    deleteDamagedStock: async function(id) {
+      cache.damagedStock = (cache.damagedStock || []).filter(d => d.id !== id);
+      localStorage.setItem("coorg_harvest_damaged_stock", JSON.stringify(cache.damagedStock));
+      await this.logActivity(`Removed damaged stock entry: ${id}`);
+
+      try {
+        await fetch(`/api/damaged-stock/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error("Error deleting damaged stock entry from server database:", err);
+      }
+    },
+    updateProductStock: async function(productId, newStock) {
+      const prod = cache.products.find(p => p.id === productId);
+      if (prod) {
+        prod.stock = parseInt(newStock) || 0;
+        localStorage.setItem("coorg_harvest_products", JSON.stringify(cache.products));
+        await this.logActivity(`Stock adjusted for ${prod.name}: ${prod.stock} units`);
+      }
+
+      try {
+        await fetch(`/api/products/${productId}/stock`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock: newStock })
+        });
+      } catch (err) {
+        console.error("Error adjusting stock on server database:", err);
       }
     },
 
@@ -680,6 +915,172 @@
         stock: 20,
         badge: "Heritage Product",
         reviews: []
+      }
+    ];
+  }
+
+  function getFallbackPurchases() {
+    return [
+      {
+        id: "PUR-2026-001",
+        invoiceNo: "MV-EST-492",
+        vendorName: "Misty Valley Plantation Farmers Collective",
+        vendorGstin: "29AABCM1948Q1Z3",
+        vendorPhone: "+91 9448011290",
+        date: "2026-10-02, 11:30 AM",
+        items: [
+          { productId: "coffee-almond", productName: "Coorg Almond Coffee", qty: 20, unitCost: 190, gstRate: 5, taxableAmount: 3800, cgst: 95, sgst: 95, igst: 0, totalAmount: 3990 },
+          { productId: "coffee-caramel", productName: "Coorg Caramel Coffee", qty: 25, unitCost: 195, gstRate: 5, taxableAmount: 4875, cgst: 121.88, sgst: 121.87, igst: 0, totalAmount: 5118.75 }
+        ],
+        subtotal: 8675.00,
+        taxAmount: 433.75,
+        totalAmount: 9108.75,
+        paymentStatus: "Paid",
+        paymentMethod: "Bank Transfer",
+        notes: "Direct procurement of freshly roasted single-estate coffee lots."
+      },
+      {
+        id: "PUR-2026-002",
+        invoiceNo: "KOD-ORG-810",
+        vendorName: "Kodagu Organic Growers Society, Madikeri",
+        vendorGstin: "29AAACK3921P1ZP",
+        vendorPhone: "+91 9880291044",
+        date: "2026-10-08, 02:15 PM",
+        items: [
+          { productId: "teas-ginger", productName: "Coorg Ginger Tea", qty: 30, unitCost: 120, gstRate: 5, taxableAmount: 3600, cgst: 90, sgst: 90, igst: 0, totalAmount: 3780 },
+          { productId: "teas-masala", productName: "Coorg Masala Tea", qty: 35, unitCost: 125, gstRate: 5, taxableAmount: 4375, cgst: 109.38, sgst: 109.37, igst: 0, totalAmount: 4593.75 }
+        ],
+        subtotal: 7975.00,
+        taxAmount: 398.75,
+        totalAmount: 8373.75,
+        paymentStatus: "Paid",
+        paymentMethod: "NEFT",
+        notes: "Certified organic estate tea lots, monsoon batch."
+      }
+    ];
+  }
+
+  function getFallbackDamagedStock() {
+    return [
+      {
+        id: "DMG-2026-001",
+        productId: "coffee-caramel",
+        productName: "Coorg Caramel Coffee",
+        qty: 2,
+        unitCost: 195.00,
+        totalLoss: 390.00,
+        reason: "Transit Damage",
+        date: "2026-10-10, 04:30 PM",
+        notes: "Glass container cracked during courier transport."
+      }
+    ];
+  }
+
+  function getFallbackOrders() {
+    return [
+      {
+        id: "AZ-2026-7819",
+        date: "2026-10-12, 11:20 AM",
+        name: "Vikram Nambiar",
+        phone: "+91 9741289012",
+        email: "vikram.nambiar@gmail.com",
+        address: "Flat 402, Green Acre Heights, Indiranagar, Bangalore, Karnataka - 560038",
+        items: [
+          { id: "coffee-almond", name: "Coorg Almond Coffee", price: 380, qty: 1, costPrice: 190, category: "Coffee Collection" }
+        ],
+        subtotal: 380,
+        discount: 0,
+        shipping: 70,
+        total: 450,
+        paymentMethod: "Amazon Pay Prepaid",
+        status: "Delivered",
+        trackingId: "ATS-IN-9812739",
+        channel: "Amazon",
+        costPrice: 190.00,
+        deliveryCost: 65.00,
+        commission: 57.00,
+        packingCost: 15.00,
+        netProfit: 123.00,
+        isReturned: 0,
+        returnCost: 0,
+        returnLoss: 0,
+        customerGstin: "",
+        gstRate: 5.00,
+        taxableAmount: 361.90,
+        cgst: 9.05,
+        sgst: 9.05,
+        igst: 0,
+        metaData: { amazonOrderId: "408-9821039-1829103" }
+      },
+      {
+        id: "ORD-2026-1042",
+        date: "2026-10-14, 03:45 PM",
+        name: "Pooja Hegde",
+        phone: "+91 9845012345",
+        email: "pooja.hegde@outlook.com",
+        address: "12, 4th Main, Malleshwaram, Bangalore, Karnataka - 560003",
+        items: [
+          { id: "teas-masala", name: "Coorg Masala Tea", price: 280, qty: 2, costPrice: 125, category: "Tea Collection" }
+        ],
+        subtotal: 560,
+        discount: 50,
+        shipping: 50,
+        total: 560,
+        paymentMethod: "UPI",
+        status: "Delivered",
+        trackingId: "BLR-EXP-44120",
+        couponCode: "FREESHIP",
+        channel: "Website",
+        costPrice: 250.00,
+        deliveryCost: 45.00,
+        commission: 0.00,
+        packingCost: 12.00,
+        netProfit: 253.00,
+        isReturned: 0,
+        returnCost: 0,
+        returnLoss: 0,
+        customerGstin: "",
+        gstRate: 5.00,
+        taxableAmount: 485.71,
+        cgst: 12.14,
+        sgst: 12.14,
+        igst: 0,
+        metaData: {}
+      },
+      {
+        id: "STR-2026-051",
+        date: "2026-10-15, 05:10 PM",
+        name: "Walk-in Tourist (Madikeri Store)",
+        phone: "+91 9449887711",
+        email: "",
+        address: "Coorg Harvest Store Counter, Raja Seat Road, Madikeri",
+        items: [
+          { id: "coffee-caramel", name: "Coorg Caramel Coffee", price: 390, qty: 1, costPrice: 195, category: "Coffee Collection" },
+          { id: "specialties-kachampuli", name: "Coorg Kachampuli (Garcinia Cambogia Vinegar)", price: 290, qty: 1, costPrice: 140, category: "Coorg Specialties" }
+        ],
+        subtotal: 680,
+        discount: 0,
+        shipping: 0,
+        total: 680,
+        paymentMethod: "Store POS / UPI",
+        status: "Delivered",
+        trackingId: "POS-COUNTER-SALE",
+        channel: "Store",
+        costPrice: 335.00,
+        deliveryCost: 0.00,
+        commission: 0.00,
+        packingCost: 8.00,
+        netProfit: 337.00,
+        isReturned: 0,
+        returnCost: 0,
+        returnLoss: 0,
+        customerGstin: "",
+        gstRate: 5.00,
+        taxableAmount: 647.62,
+        cgst: 16.19,
+        sgst: 16.19,
+        igst: 0,
+        metaData: {}
       }
     ];
   }
